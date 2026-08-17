@@ -1,1 +1,661 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>새친구 · 뿌리내리기</title>
 
+<!-- 모바일 웹앱 전체화면 및 앱 이름 설정 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="새친구관리">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- 홈 화면 아이콘 -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%2322392B'/%3E%3Cpath d='M256 100 C200 100 120 160 120 250 C120 310 160 360 230 380 C240 310 250 250 340 180 C280 200 260 230 256 280 C256 180 280 120 380 100 C340 100 290 100 256 100 Z' fill='%23C98A2B'/%3E%3Cpath d='M256 220 C230 220 180 260 180 320 C180 370 210 400 260 412 C256 360 270 310 330 270 C290 280 275 300 270 335 C270 265 285 235 350 220 C320 220 280 220 256 220 Z' fill='%235B8A5A'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%2322392B'/%3E%3Cpath d='M256 100 C200 100 120 160 120 250 C120 310 160 360 230 380 C240 310 250 250 340 180 C280 200 260 230 256 280 C256 180 280 120 380 100 C340 100 290 100 256 100 Z' fill='%23C98A2B'/%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#E9E4D3;
+    --surface:#FFFDF8;
+    --surface-2:#F3EEDF;
+    --ink:#1F3327;
+    --ink-soft:#5B6B5E;
+    --accent:#C98A2B;
+    --accent-soft:#E8C77A;
+    --leaf:#5B8A5A;
+    --leaf-empty:#DCD6C0;
+    --peer:#B5762E;
+    --peer-bg:#F3E4C7;
+    --warn:#B4483B;
+    --planted:#7C5C3B;
+    --planted-bg:#EFE3D2;
+    --danger:#B4483B;
+    --line:#DBD4BE;
+    --shadow: 0 2px 10px rgba(31,51,39,0.08), 0 1px 2px rgba(31,51,39,0.06);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',sans-serif;}
+  body{padding-bottom:90px;}
+  h1,h2,h3,.serif{font-family:'Gowun Batang',serif;}
+
+  .wrap{max-width:560px;margin:0 auto;padding:0 16px;}
+
+  header.top{
+    padding:28px 16px 18px;
+    background: linear-gradient(180deg, #22392B 0%, #1B2E22 100%);
+    color:#F3EEDF;
+    border-radius: 0 0 22px 22px;
+    box-shadow: var(--shadow);
+    position:relative;
+    overflow:hidden;
+  }
+  header.top::after{
+    content:"";
+    position:absolute; right:-30px; top:-30px; width:150px; height:150px;
+    background: radial-gradient(circle, rgba(232,199,122,0.18) 0%, transparent 70%);
+  }
+  header.top .eyebrow{font-size:12px; letter-spacing:2px; color:var(--accent-soft); font-weight:600; margin-bottom:6px;}
+  header.top h1{font-size:26px; margin:0 0 4px; font-weight:700;}
+  header.top p{margin:0; font-size:13px; color:#C9C4AE; line-height:1.5;}
+
+  .stats{display:flex; gap:10px; margin-top:18px;}
+  .stat{flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:10px 8px; text-align:center;}
+  .stat .num{font-size:20px; font-weight:700; font-family:'Gowun Batang',serif; color:#F3EEDF;}
+  .stat .lbl{font-size:11px; color:#B7B29C; margin-top:2px;}
+
+  .sync-row{display:flex; align-items:center; justify-content:space-between; margin-top:14px; font-size:11px; color:#9FA791;}
+  .sync-actions{display:flex; gap:8px;}
+  .sync-row button{background:none;border:none;color:var(--accent-soft);font-size:11px;cursor:pointer;padding:4px 0;font-family:inherit;}
+  .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--leaf);margin-right:5px;box-shadow:0 0 0 3px rgba(91,138,90,0.25);}
+
+  .search-add{display:flex; gap:8px; margin:16px 0 10px;}
+  .search-add input{
+    flex:1; padding:11px 14px; border-radius:12px; border:1px solid var(--line);
+    background:var(--surface); font-family:inherit; font-size:14px; color:var(--ink);
+  }
+  .search-add input:focus{outline:2px solid var(--accent-soft); outline-offset:1px;}
+  .btn-add{
+    width:44px; height:44px; border-radius:12px; border:none; background:var(--accent);
+    color:#fff; font-size:22px; cursor:pointer; box-shadow:var(--shadow); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; line-height:1;
+  }
+  .btn-add:active{transform:scale(0.96);}
+
+  .tabs{display:flex; gap:6px; margin-bottom:14px; background:var(--surface-2); padding:4px; border-radius:12px;}
+  .tabs button{
+    flex:1; padding:9px 6px; border:none; background:transparent; border-radius:9px;
+    font-family:inherit; font-size:13px; font-weight:600; color:var(--ink-soft); cursor:pointer;
+  }
+  .tabs button.active{background:var(--surface); color:var(--ink); box-shadow:var(--shadow);}
+
+  .empty{text-align:center; padding:50px 20px; color:var(--ink-soft);}
+  .empty .big{font-size:38px; margin-bottom:10px;}
+  .empty p{font-size:13px; line-height:1.6; margin:4px 0;}
+
+  .card{
+    background:var(--surface); border-radius:16px; padding:16px; margin-bottom:12px;
+    box-shadow:var(--shadow); border:1px solid rgba(31,51,39,0.05);
+  }
+  .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .card-name{font-family:'Gowun Batang',serif; font-size:18px; font-weight:700; margin:0;}
+  .card-meta{font-size:12px; color:var(--ink-soft); margin-top:3px;}
+  .badge{font-size:11px; padding:3px 9px; border-radius:20px; font-weight:600; white-space:nowrap;}
+  .badge.progress{background:#E4EEE0; color:var(--leaf);}
+  .badge.planted{background:var(--planted-bg); color:var(--planted);}
+
+  .leaves{display:flex; gap:4px; margin:12px 0 6px; align-items:center; flex-wrap:wrap;}
+  .leaf-count{font-size:12px; color:var(--ink-soft); margin-left:4px; font-weight:600;}
+
+  .peer-status{display:flex; align-items:center; gap:6px; font-size:11.5px; margin-bottom:10px; font-weight:600;}
+  .peer-status.ok{color:var(--peer);}
+  .peer-status.warn{color:var(--warn);}
+  .peer-status .pill{background:var(--peer-bg); color:var(--peer); padding:2px 8px; border-radius:20px; font-size:11px;}
+  .peer-status.warn .pill{background:#F5E1DD; color:var(--warn);}
+
+  .card-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  .card-actions button{
+    flex:1; min-width:80px; padding:9px 10px; border-radius:10px; border:1px solid var(--line);
+    background:var(--surface); font-family:inherit; font-size:12.5px; font-weight:600; cursor:pointer; color:var(--ink);
+  }
+  .card-actions button.primary{background:var(--leaf); color:#fff; border:none;}
+  .card-actions button.plant{background:var(--accent); color:#fff; border:none;}
+  .card-actions button.checked{background:var(--surface-2); color:var(--ink-soft);}
+
+  .card-extra{margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); font-size:12px; color:var(--ink-soft); display:none;}
+  .card-extra.open{display:block;}
+  .card-extra .row{display:flex; justify-content:space-between; padding:3px 0;}
+  .card-extra .dates{margin-top:6px; display:flex; flex-wrap:wrap; gap:5px;}
+  .card-extra .dates span{background:var(--surface-2); padding:2px 8px; border-radius:8px; font-size:11px; cursor:pointer;}
+  .card-extra .dates span.peer{background:var(--peer-bg); color:var(--peer); font-weight:600;}
+  .card-extra .hint{font-size:10.5px; color:var(--ink-soft); margin-top:4px;}
+  .link-row{display:flex; gap:14px; margin-top:8px;}
+  .link-row a{font-size:12px; color:var(--ink-soft); text-decoration:underline; cursor:pointer;}
+  .link-row a.danger{color:var(--danger);}
+
+  .fab-hint{text-align:center; font-size:11px; color:var(--ink-soft); margin:20px 0 8px;}
+
+  /* Modal Base */
+  .overlay{
+    position:fixed; inset:0; background:rgba(20,30,22,0.5); display:flex; align-items:flex-end;
+    justify-content:center; z-index:50; opacity:0; pointer-events:none; transition:opacity .2s;
+  }
+  .overlay.open{opacity:1; pointer-events:auto;}
+  .sheet{
+    background:var(--surface); width:100%; max-width:560px; border-radius:20px 20px 0 0;
+    padding:20px 20px calc(20px + env(safe-area-inset-bottom)); max-height:88vh; overflow-y:auto;
+    transform:translateY(16px); transition:transform .2s;
+  }
+  .overlay.open .sheet{transform:translateY(0);}
+  .sheet h2{font-size:19px; margin:0 0 16px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12px; font-weight:600; color:var(--ink-soft); margin-bottom:6px;}
+  .field input, .field textarea{
+    width:100%; padding:11px 12px; border-radius:10px; border:1px solid var(--line);
+    font-family:inherit; font-size:14px; background:var(--surface); color:var(--ink);
+  }
+  .field textarea{resize:vertical; min-height:60px;}
+  .field-row{display:flex; gap:10px;}
+  .field-row .field{flex:1;}
+  .sheet-actions{display:flex; gap:10px; margin-top:18px;}
+  .sheet-actions button{
+    flex:1; padding:13px; border-radius:12px; border:none; font-family:inherit; font-size:14.5px; font-weight:700; cursor:pointer;
+  }
+  .sheet-actions .cancel{background:var(--surface-2); color:var(--ink-soft);}
+  .sheet-actions .save{background:var(--ink); color:#fff;}
+
+  /* Backup Box */
+  .backup-card{
+    background:var(--surface-2); border-radius:12px; padding:14px; margin-bottom:12px;
+  }
+  .backup-card h3{font-size:14px; margin:0 0 4px; font-weight:700; color:var(--ink);}
+  .backup-card p{font-size:12px; margin:0 0 10px; color:var(--ink-soft); line-height:1.4;}
+  .backup-card button{
+    width:100%; padding:10px; border-radius:8px; border:1px solid var(--line);
+    background:var(--surface); font-family:inherit; font-size:13px; font-weight:600;
+    cursor:pointer; color:var(--ink);
+  }
+
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff;
+    padding:11px 18px; border-radius:30px; font-size:13px; box-shadow:var(--shadow); z-index:100;
+    opacity:0; pointer-events:none; transition:opacity .25s, transform .25s;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">NEW FRIEND TEAM</div>
+    <h1>새친구, 뿌리내리다</h1>
+    <p>새로 오신 분이 예배 후 모임을 거쳐 순으로 등순하기까지의 여정을 기록해요.</p>
+    <div class="stats">
+      <div class="stat"><div class="num" id="statProgress">0</div><div class="lbl">함께 하는 중</div></div>
+      <div class="stat"><div class="num" id="statReady">0</div><div class="lbl">등순 준비완료</div></div>
+      <div class="stat"><div class="num" id="statPlanted">0</div><div class="lbl">등순완료</div></div>
+    </div>
+    <div class="sync-row">
+      <span><span class="dot"></span><span id="syncText">정상 작동 중</span></span>
+      <div class="sync-actions">
+        <button id="backupModalBtn">데이터 관리 ⚙</button>
+        <button id="refreshBtn">새로고침</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="search-add">
+    <input type="text" id="searchInput" placeholder="이름으로 검색">
+    <button class="btn-add" id="openAdd">＋</button>
+  </div>
+
+  <div class="tabs">
+    <button data-tab="progress" class="active">진행중</button>
+    <button data-tab="planted">등순완료</button>
+    <button data-tab="all">전체</button>
+  </div>
+
+  <div id="list"></div>
+  <div class="fab-hint">이 화면을 사파리/크롬에서 '홈 화면에 추가'하면 앱처럼 쓸 수 있어요.</div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="overlay" id="overlayForm">
+  <div class="sheet">
+    <h2 id="formTitle">새친구 등록</h2>
+    <div class="field">
+      <label>이름 *</label>
+      <input type="text" id="fName" placeholder="예: 김새친">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>연락처</label>
+        <input type="tel" id="fPhone" placeholder="010-0000-0000">
+      </div>
+      <div class="field">
+        <label>첫 방문일</label>
+        <input type="date" id="fDate">
+      </div>
+    </div>
+    <div class="field">
+      <label>목표 모임 횟수 (등순 기준)</label>
+      <input type="number" id="fTarget" min="1" max="20" value="6">
+    </div>
+    <div class="field">
+      <label>메모</label>
+      <textarea id="fNote" placeholder="가족관계, 인도자, 특이사항 등"></textarea>
+    </div>
+    <div class="sheet-actions">
+      <button class="cancel" id="cancelForm">취소</button>
+      <button class="save" id="saveForm">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Plant Modal -->
+<div class="overlay" id="overlayPlant">
+  <div class="sheet">
+    <h2>등순 처리</h2>
+    <p style="font-size:13px;color:var(--ink-soft);margin-top:-8px;">어느 순으로 올려보낼까요?</p>
+    <p id="plantWarn" style="font-size:12.5px;color:var(--warn);font-weight:600;display:none;margin:-6px 0 4px;">⚠ 아직 동기모임에 한 번도 참석하지 않았어요. 그래도 등순 처리할까요?</p>
+    <div class="field">
+      <label>순 이름 *</label>
+      <input type="text" id="pSoon" placeholder="예: 은혜3순">
+    </div>
+    <div class="field">
+      <label>등순일</label>
+      <input type="date" id="pDate">
+    </div>
+    <div class="sheet-actions">
+      <button class="cancel" id="cancelPlant">취소</button>
+      <button class="save" id="savePlant" style="background:var(--accent);">등순 완료</button>
+    </div>
+  </div>
+</div>
+
+<!-- Backup / Restore Modal -->
+<div class="overlay" id="overlayBackup">
+  <div class="sheet">
+    <h2>데이터 백업 및 복원</h2>
+    <div class="backup-card">
+      <h3>JSON 전체 백업</h3>
+      <p>기록된 모든 출석 및 개인 데이터를 JSON 파일로 다운로드합니다.</p>
+      <button id="btnExportJson">JSON 백업 파일 다운로드</button>
+    </div>
+
+    <div class="backup-card">
+      <h3>JSON 데이터 복원</h3>
+      <p>기존에 백업해둔 JSON 파일을 불러와 데이터를 복구합니다.</p>
+      <input type="file" id="importJsonInput" accept=".json" style="display:none">
+      <button id="btnImportJson">백업 파일(.json) 불러오기</button>
+    </div>
+
+    <div class="backup-card">
+      <h3>엑셀(CSV) 내보내기</h3>
+      <p>교인 명단과 출석 현황을 스프레드시트나 엑셀에서 열 수 있는 CSV로 받습니다.</p>
+      <button id="btnExportCsv">엑셀(CSV) 파일 다운로드</button>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="cancel" id="closeBackup">닫기</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'church-new-friends-v1';
+let data = { people: [] };
+let currentTab = 'progress';
+let editingId = null;
+let plantingId = null;
+let expandedId = null;
+
+const $ = (id) => document.getElementById(id);
+const todayStr = () => new Date().toISOString().slice(0,10);
+
+function showToast(msg){
+  const t = $('toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function loadData(){
+  try{
+    const str = localStorage.getItem(STORAGE_KEY);
+    if(str){
+      data = JSON.parse(str);
+      migrateData();
+    } else {
+      data = { people: [] };
+    }
+  }catch(e){
+    data = { people: [] };
+  }
+  render();
+}
+
+function saveData(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    $('syncText').textContent = '저장됨 · ' + new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){
+    showToast('저장에 실패했어요.');
+  }
+}
+
+function migrateData(){
+  if(!data || !Array.isArray(data.people)) data = { people: [] };
+  data.people.forEach(p=>{
+    if(!Array.isArray(p.attendance)) p.attendance = [];
+    p.attendance = p.attendance.map(a => typeof a === 'string' ? {date:a, type:'regular'} : a);
+    p.attendance.sort((a,b)=>a.date.localeCompare(b.date));
+  });
+}
+
+function leafSvg(filled, type){
+  const color = !filled ? 'var(--leaf-empty)' : (type === 'peer' ? 'var(--peer)' : 'var(--leaf)');
+  return `<svg width="15" height="15" viewBox="0 0 24 24" fill="${color}"><path d="M12 2C7 2 2 7 2 13c0 5 4 9 9 9 1-6 2-11 9-15C16 3 14 2 12 2z"/></svg>`;
+}
+
+function personCard(p){
+  const count = p.attendance.length;
+  const target = p.target || 6;
+  const peerCount = p.attendance.filter(a=>a.type==='peer').length;
+  const todayEntry = p.attendance.find(a=>a.date===todayStr());
+  const checkedRegularToday = todayEntry && todayEntry.type==='regular';
+  const checkedPeerToday = todayEntry && todayEntry.type==='peer';
+  const countReady = count >= target;
+  const peerReady = peerCount >= 1;
+  const fullyReady = p.status === 'progress' && countReady && peerReady;
+
+  let leaves = '';
+  const sortedTypes = p.attendance.map(a=>a.type);
+  for(let i=0;i<target;i++){ leaves += leafSvg(i < count, sortedTypes[i]); }
+
+  const badge = p.status === 'planted'
+    ? `<span class="badge planted">🌱 ${p.soonName || '등순완료'}</span>`
+    : fullyReady ? `<span class="badge progress">등순 준비완료</span>`
+    : `<span class="badge progress">진행중</span>`;
+
+  const peerStatusLine = p.status === 'progress' ? `
+    <div class="peer-status ${peerReady ? 'ok' : 'warn'}">
+      <span class="pill">동기모임 ${peerCount}/1</span>
+      ${peerReady ? '동기모임 참석 완료' : '동기모임 최소 1회 필요'}
+    </div>` : '';
+
+  const isOpen = expandedId === p.id;
+
+  const dateChips = p.attendance.map(a =>
+    `<span class="${a.type==='peer'?'peer':''}" data-action="removeDate" data-id="${p.id}" data-date="${a.date}" title="탭하면 삭제">${a.date}${a.type==='peer' ? ' · 동기' : ''}</span>`
+  ).join('') || '<span>출석 기록 없음</span>';
+
+  return `
+  <div class="card" data-id="${p.id}">
+    <div class="card-top">
+      <div>
+        <p class="card-name">${escapeHtml(p.name)}</p>
+        <div class="card-meta">첫 방문 ${p.firstVisitDate || '미기록'}${p.phone ? ' · ' + escapeHtml(p.phone) : ''}</div>
+      </div>
+      ${badge}
+    </div>
+    <div class="leaves">${leaves}<span class="leaf-count">${count}/${target}</span></div>
+    ${peerStatusLine}
+    <div class="card-actions">
+      ${p.status === 'progress' ? `
+        <button class="${checkedRegularToday ? 'checked' : 'primary'}" data-action="checkRegular" data-id="${p.id}">${checkedRegularToday ? '일반모임 체크됨 ✓' : '오늘 일반모임 체크'}</button>
+        <button class="${checkedPeerToday ? 'checked' : 'plant'}" data-action="checkPeer" data-id="${p.id}">${checkedPeerToday ? '동기모임 체크됨 ✓' : '오늘 동기모임 체크'}</button>
+        <button data-action="edit" data-id="${p.id}">편집</button>
+        <button class="plant" data-action="plant" data-id="${p.id}" ${count<1?'style="opacity:.5"':''}>등순 처리</button>
+      ` : `
+        <button data-action="edit" data-id="${p.id}">편집</button>
+        <button data-action="unplant" data-id="${p.id}">되돌리기</button>
+      `}
+    </div>
+    <div class="card-extra ${isOpen?'open':''}">
+      ${p.note ? `<div class="row"><span>메모</span><span>${escapeHtml(p.note)}</span></div>` : ''}
+      ${p.status==='planted' ? `<div class="row"><span>등순일</span><span>${p.plantedDate||'-'}</span></div>` : ''}
+      <div class="dates">${dateChips}</div>
+      <div class="hint">동기모임으로 표시된 날짜는 주황색이에요. 날짜를 탭하면 그 기록을 삭제해요.</div>
+      <div class="link-row">
+        <a data-action="delete" data-id="${p.id}" class="danger">전체 삭제</a>
+      </div>
+    </div>
+    <div class="link-row" style="margin-top:8px;">
+      <a data-action="toggle" data-id="${p.id}">${isOpen ? '접기 ▲' : '자세히 ▼'}</a>
+    </div>
+  </div>`;
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function render(){
+  const search = $('searchInput').value.trim().toLowerCase();
+  let people = [...(data.people || [])];
+
+  if(currentTab === 'progress') people = people.filter(p=>p.status==='progress');
+  if(currentTab === 'planted') people = people.filter(p=>p.status==='planted');
+  if(search) people = people.filter(p=>p.name.toLowerCase().includes(search));
+
+  people.sort((a,b)=>(b.firstVisitDate||'').localeCompare(a.firstVisitDate||''));
+
+  const list = $('list');
+  if(people.length === 0){
+    list.innerHTML = `<div class="empty"><div class="big">🌱</div><p>${data.people.length===0 ? '아직 등록된 새친구가 없어요.' : '해당하는 새친구가 없어요.'}</p><p>오른쪽 위 ＋ 버튼으로 새친구를 등록해보세요.</p></div>`;
+  } else {
+    list.innerHTML = people.map(personCard).join('');
+  }
+
+  $('statProgress').textContent = data.people.filter(p=>p.status==='progress').length;
+  $('statReady').textContent = data.people.filter(p=>p.status==='progress' && p.attendance.length >= (p.target||6)).length;
+  $('statPlanted').textContent = data.people.filter(p=>p.status==='planted').length;
+}
+
+// Event Delegations
+$('list').addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-action]');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  const action = btn.dataset.action;
+  const p = data.people.find(x=>x.id===id);
+  if(!p) return;
+
+  if(action === 'checkRegular' || action === 'checkPeer'){
+    const t = todayStr();
+    const type = action === 'checkPeer' ? 'peer' : 'regular';
+    const idx = p.attendance.findIndex(a=>a.date===t);
+    if(idx >= 0){
+      if(p.attendance[idx].type === type) p.attendance.splice(idx,1);
+      else p.attendance[idx].type = type;
+    } else {
+      p.attendance.push({date:t, type});
+    }
+    p.attendance.sort((a,b)=>a.date.localeCompare(b.date));
+    saveData(); render();
+  } else if(action === 'removeDate'){
+    const date = btn.dataset.date;
+    p.attendance = p.attendance.filter(a=>a.date!==date);
+    saveData(); render();
+  } else if(action === 'edit'){
+    openForm(p);
+  } else if(action === 'plant'){
+    plantingId = id;
+    $('pSoon').value = '';
+    $('pDate').value = todayStr();
+    const peerCount = p.attendance.filter(a=>a.type==='peer').length;
+    $('plantWarn').style.display = peerCount < 1 ? 'block' : 'none';
+    $('overlayPlant').classList.add('open');
+  } else if(action === 'unplant'){
+    p.status = 'progress';
+    p.soonName = '';
+    p.plantedDate = '';
+    saveData(); render();
+    showToast('진행중 상태로 되돌렸어요.');
+  } else if(action === 'delete'){
+    if(confirm(`${p.name}님 기록을 삭제할까요? 되돌릴 수 없어요.`)){
+      data.people = data.people.filter(x=>x.id!==id);
+      saveData(); render();
+    }
+  } else if(action === 'toggle'){
+    expandedId = expandedId === id ? null : id;
+    render();
+  }
+});
+
+document.querySelectorAll('.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTab = btn.dataset.tab;
+    render();
+  });
+});
+
+$('searchInput').addEventListener('input', render);
+
+function openForm(p){
+  editingId = p ? p.id : null;
+  $('formTitle').textContent = p ? '새친구 정보 수정' : '새친구 등록';
+  $('fName').value = p ? p.name : '';
+  $('fPhone').value = p ? p.phone : '';
+  $('fDate').value = p ? p.firstVisitDate : todayStr();
+  $('fTarget').value = p ? (p.target||6) : 6;
+  $('fNote').value = p ? p.note : '';
+  $('overlayForm').classList.add('open');
+}
+$('openAdd').addEventListener('click', ()=>openForm(null));
+$('cancelForm').addEventListener('click', ()=>$('overlayForm').classList.remove('open'));
+$('overlayForm').addEventListener('click', (e)=>{ if(e.target.id==='overlayForm') $('overlayForm').classList.remove('open'); });
+
+$('saveForm').addEventListener('click', ()=>{
+  const name = $('fName').value.trim();
+  if(!name){ showToast('이름을 입력해주세요.'); return; }
+  if(editingId){
+    const p = data.people.find(x=>x.id===editingId);
+    p.name = name; p.phone = $('fPhone').value.trim();
+    p.firstVisitDate = $('fDate').value; p.target = parseInt($('fTarget').value)||6;
+    p.note = $('fNote').value.trim();
+  } else {
+    data.people.push({
+      id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      name, phone: $('fPhone').value.trim(),
+      firstVisitDate: $('fDate').value || todayStr(),
+      target: parseInt($('fTarget').value)||6,
+      note: $('fNote').value.trim(),
+      attendance: [],
+      status: 'progress',
+      soonName: '', plantedDate: ''
+    });
+  }
+  saveData(); render();
+  $('overlayForm').classList.remove('open');
+  showToast('저장했어요.');
+});
+
+$('cancelPlant').addEventListener('click', ()=>$('overlayPlant').classList.remove('open'));
+$('overlayPlant').addEventListener('click', (e)=>{ if(e.target.id==='overlayPlant') $('overlayPlant').classList.remove('open'); });
+$('savePlant').addEventListener('click', ()=>{
+  const soon = $('pSoon').value.trim();
+  if(!soon){ showToast('순 이름을 입력해주세요.'); return; }
+  const p = data.people.find(x=>x.id===plantingId);
+  p.status = 'planted';
+  p.soonName = soon;
+  p.plantedDate = $('pDate').value || todayStr();
+  saveData(); render();
+  $('overlayPlant').classList.remove('open');
+  showToast(`${p.name}님이 ${soon}으로 등순했어요 🌱`);
+});
+
+function downloadFile(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+$('btnExportJson').addEventListener('click', ()=>{
+  const jsonStr = JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  downloadFile(blob, `새친구_백업_${todayStr()}.json`);
+  showToast('JSON 백업 파일이 다운로드되었습니다.');
+});
+
+$('btnImportJson').addEventListener('click', ()=> $('importJsonInput').click());
+$('importJsonInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (event)=>{
+    try{
+      const imported = JSON.parse(event.target.result);
+      if(!imported || !Array.isArray(imported.people)){
+        throw new Error('올바른 백업 형식이 아닙니다.');
+      }
+      if(confirm(`기존 데이터를 덮어쓰고 ${imported.people.length}명의 데이터를 복원할까요?`)){
+        data = imported;
+        migrateData();
+        saveData();
+        render();
+        $('overlayBackup').classList.remove('open');
+        showToast('데이터를 성공적으로 복원했습니다.');
+      }
+    }catch(err){
+      alert('백업 파일을 불러오는 중 오류가 발생했습니다: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+$('btnExportCsv').addEventListener('click', ()=>{
+  const headers = ['이름', '상태', '배속순', '첫방문일', '등순일', '연락처', '총출석횟수', '동기모임횟수', '출석날짜목록', '메모'];
+  const rows = data.people.map(p => {
+    const statusText = p.status === 'planted' ? '등순완료' : '진행중';
+    const peerCount = p.attendance.filter(a=>a.type==='peer').length;
+    const datesStr = p.attendance.map(a => `${a.date}(${a.type==='peer'?'동기':'일반'})`).join('; ');
+    
+    return [
+      `"${(p.name||'').replace(/"/g, '""')}"`,
+      `"${statusText}"`,
+      `"${(p.soonName||'').replace(/"/g, '""')}"`,
+      `"${p.firstVisitDate||''}"`,
+      `"${p.plantedDate||''}"`,
+      `"${(p.phone||'').replace(/"/g, '""')}"`,
+      p.attendance.length,
+      peerCount,
+      `"${datesStr.replace(/"/g, '""')}"`,
+      `"${(p.note||'').replace(/"/g, '""')}"`
+    ].join(',');
+  });
+
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  downloadFile(blob, `새친구_명단_${todayStr()}.csv`);
+  showToast('엑셀(CSV) 파일이 다운로드되었습니다.');
+});
+
+$('backupModalBtn').addEventListener('click', ()=> $('overlayBackup').classList.add('open'));
+$('closeBackup').addEventListener('click', ()=> $('overlayBackup').classList.remove('open'));
+$('overlayBackup').addEventListener('click', (e)=>{ if(e.target.id==='overlayBackup') $('overlayBackup').classList.remove('open'); });
+
+$('refreshBtn').addEventListener('click', loadData);
+
+// 초기 실행
+window.addEventListener('DOMContentLoaded', loadData);
+loadData();
+</script>
+</body>
+</html>
