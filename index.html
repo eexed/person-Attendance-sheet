@@ -4,17 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
 <title>새친구 · 뿌리내리기</title>
-
-<!-- 모바일 웹앱 전체화면 및 앱 이름 설정 -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="새친구관리">
-<meta name="mobile-web-app-capable" content="yes">
-
-<!-- 홈 화면 아이콘 -->
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%2322392B'/%3E%3Cpath d='M256 100 C200 100 120 160 120 250 C120 310 160 360 230 380 C240 310 250 250 340 180 C280 200 260 230 256 280 C256 180 280 120 380 100 C340 100 290 100 256 100 Z' fill='%23C98A2B'/%3E%3Cpath d='M256 220 C230 220 180 260 180 320 C180 370 210 400 260 412 C256 360 270 310 330 270 C290 280 275 300 270 335 C270 265 285 235 350 220 C320 220 280 220 256 220 Z' fill='%235B8A5A'/%3E%3C/svg%3E">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%2322392B'/%3E%3Cpath d='M256 100 C200 100 120 160 120 250 C120 310 160 360 230 380 C240 310 250 250 340 180 C280 200 260 230 256 280 C256 180 280 120 380 100 C340 100 290 100 256 100 Z' fill='%23C98A2B'/%3E%3C/svg%3E">
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -68,7 +57,6 @@
   .stat .lbl{font-size:11px; color:#B7B29C; margin-top:2px;}
 
   .sync-row{display:flex; align-items:center; justify-content:space-between; margin-top:14px; font-size:11px; color:#9FA791;}
-  .sync-actions{display:flex; gap:8px;}
   .sync-row button{background:none;border:none;color:var(--accent-soft);font-size:11px;cursor:pointer;padding:4px 0;font-family:inherit;}
   .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--leaf);margin-right:5px;box-shadow:0 0 0 3px rgba(91,138,90,0.25);}
 
@@ -110,6 +98,12 @@
   .leaves{display:flex; gap:4px; margin:12px 0 6px; align-items:center; flex-wrap:wrap;}
   .leaf-count{font-size:12px; color:var(--ink-soft); margin-left:4px; font-weight:600;}
 
+  .checkin-row{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .checkin-row label{font-size:11px; color:var(--ink-soft); font-weight:600; white-space:nowrap;}
+  .checkin-row input[type=date]{
+    flex:1; padding:7px 8px; border-radius:8px; border:1px solid var(--line);
+    background:var(--surface); font-family:inherit; font-size:12.5px; color:var(--ink);
+  }
   .peer-status{display:flex; align-items:center; gap:6px; font-size:11.5px; margin-bottom:10px; font-weight:600;}
   .peer-status.ok{color:var(--peer);}
   .peer-status.warn{color:var(--warn);}
@@ -138,7 +132,7 @@
 
   .fab-hint{text-align:center; font-size:11px; color:var(--ink-soft); margin:20px 0 8px;}
 
-  /* Modal Base */
+  /* Modal */
   .overlay{
     position:fixed; inset:0; background:rgba(20,30,22,0.5); display:flex; align-items:flex-end;
     justify-content:center; z-index:50; opacity:0; pointer-events:none; transition:opacity .2s;
@@ -167,24 +161,14 @@
   .sheet-actions .cancel{background:var(--surface-2); color:var(--ink-soft);}
   .sheet-actions .save{background:var(--ink); color:#fff;}
 
-  /* Backup Box */
-  .backup-card{
-    background:var(--surface-2); border-radius:12px; padding:14px; margin-bottom:12px;
-  }
-  .backup-card h3{font-size:14px; margin:0 0 4px; font-weight:700; color:var(--ink);}
-  .backup-card p{font-size:12px; margin:0 0 10px; color:var(--ink-soft); line-height:1.4;}
-  .backup-card button{
-    width:100%; padding:10px; border-radius:8px; border:1px solid var(--line);
-    background:var(--surface); font-family:inherit; font-size:13px; font-weight:600;
-    cursor:pointer; color:var(--ink);
-  }
-
   .toast{
     position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff;
     padding:11px 18px; border-radius:30px; font-size:13px; box-shadow:var(--shadow); z-index:100;
     opacity:0; pointer-events:none; transition:opacity .25s, transform .25s;
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+
+  .loading{padding:80px 20px; text-align:center; color:var(--ink-soft); font-size:13px;}
 </style>
 </head>
 <body>
@@ -195,16 +179,13 @@
     <h1>새친구, 뿌리내리다</h1>
     <p>새로 오신 분이 예배 후 모임을 거쳐 순으로 등순하기까지의 여정을 기록해요.</p>
     <div class="stats">
-      <div class="stat"><div class="num" id="statProgress">0</div><div class="lbl">함께 하는 중</div></div>
-      <div class="stat"><div class="num" id="statReady">0</div><div class="lbl">등순 준비완료</div></div>
-      <div class="stat"><div class="num" id="statPlanted">0</div><div class="lbl">등순완료</div></div>
+      <div class="stat"><div class="num" id="statProgress">-</div><div class="lbl">함께 하는 중</div></div>
+      <div class="stat"><div class="num" id="statReady">-</div><div class="lbl">등순 준비완료</div></div>
+      <div class="stat"><div class="num" id="statPlanted">-</div><div class="lbl">등순완료</div></div>
     </div>
     <div class="sync-row">
-      <span><span class="dot"></span><span id="syncText">정상 작동 중</span></span>
-      <div class="sync-actions">
-        <button id="backupModalBtn">데이터 관리 ⚙</button>
-        <button id="refreshBtn">새로고침</button>
-      </div>
+      <span><span class="dot"></span><span id="syncText">불러오는 중…</span></span>
+      <button id="refreshBtn">지금 새로고침</button>
     </div>
   </header>
 
@@ -277,35 +258,6 @@
   </div>
 </div>
 
-<!-- Backup / Restore Modal -->
-<div class="overlay" id="overlayBackup">
-  <div class="sheet">
-    <h2>데이터 백업 및 복원</h2>
-    <div class="backup-card">
-      <h3>JSON 전체 백업</h3>
-      <p>기록된 모든 출석 및 개인 데이터를 JSON 파일로 다운로드합니다.</p>
-      <button id="btnExportJson">JSON 백업 파일 다운로드</button>
-    </div>
-
-    <div class="backup-card">
-      <h3>JSON 데이터 복원</h3>
-      <p>기존에 백업해둔 JSON 파일을 불러와 데이터를 복구합니다.</p>
-      <input type="file" id="importJsonInput" accept=".json" style="display:none">
-      <button id="btnImportJson">백업 파일(.json) 불러오기</button>
-    </div>
-
-    <div class="backup-card">
-      <h3>엑셀(CSV) 내보내기</h3>
-      <p>교인 명단과 출석 현황을 스프레드시트나 엑셀에서 열 수 있는 CSV로 받습니다.</p>
-      <button id="btnExportCsv">엑셀(CSV) 파일 다운로드</button>
-    </div>
-
-    <div class="sheet-actions">
-      <button class="cancel" id="closeBackup">닫기</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>
@@ -315,44 +267,54 @@ let currentTab = 'progress';
 let editingId = null;
 let plantingId = null;
 let expandedId = null;
+let lastSavedString = '';
+let checkinDates = {}; // personId -> selected date string
 
 const $ = (id) => document.getElementById(id);
 const todayStr = () => new Date().toISOString().slice(0,10);
 
 function showToast(msg){
   const t = $('toast');
-  if(!t) return;
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 1800);
 }
 
-function loadData(){
+async function loadData(silent){
   try{
-    const str = localStorage.getItem(STORAGE_KEY);
-    if(str){
+    const res = await window.storage.get(STORAGE_KEY, true);
+    const str = res ? res.value : null;
+    if(str && str !== lastSavedString){
       data = JSON.parse(str);
       migrateData();
-    } else {
-      data = { people: [] };
+      lastSavedString = str;
+      render();
     }
+    $('syncText').textContent = '방금 업데이트 · ' + new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
   }catch(e){
-    data = { people: [] };
+    if(!silent){
+      data = { people: [] };
+      $('syncText').textContent = '아직 데이터 없음 (첫 사용)';
+    } else {
+      $('syncText').textContent = '동기화 대기 중';
+    }
   }
-  render();
 }
 
-function saveData(){
+async function saveData(){
   try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    const str = JSON.stringify(data);
+    lastSavedString = str;
+    const result = await window.storage.set(STORAGE_KEY, str, true);
+    if(!result) throw new Error('save failed');
     $('syncText').textContent = '저장됨 · ' + new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
   }catch(e){
-    showToast('저장에 실패했어요.');
+    showToast('저장에 실패했어요. 네트워크를 확인해주세요.');
   }
 }
 
 function migrateData(){
-  if(!data || !Array.isArray(data.people)) data = { people: [] };
+  if(!data.people) data.people = [];
   data.people.forEach(p=>{
     if(!Array.isArray(p.attendance)) p.attendance = [];
     p.attendance = p.attendance.map(a => typeof a === 'string' ? {date:a, type:'regular'} : a);
@@ -369,9 +331,10 @@ function personCard(p){
   const count = p.attendance.length;
   const target = p.target || 6;
   const peerCount = p.attendance.filter(a=>a.type==='peer').length;
-  const todayEntry = p.attendance.find(a=>a.date===todayStr());
-  const checkedRegularToday = todayEntry && todayEntry.type==='regular';
-  const checkedPeerToday = todayEntry && todayEntry.type==='peer';
+  const selDate = checkinDates[p.id] || todayStr();
+  const selEntry = p.attendance.find(a=>a.date===selDate);
+  const checkedRegularToday = selEntry && selEntry.type==='regular';
+  const checkedPeerToday = selEntry && selEntry.type==='peer';
   const countReady = count >= target;
   const peerReady = peerCount >= 1;
   const fullyReady = p.status === 'progress' && countReady && peerReady;
@@ -408,10 +371,15 @@ function personCard(p){
     </div>
     <div class="leaves">${leaves}<span class="leaf-count">${count}/${target}</span></div>
     ${peerStatusLine}
+    ${p.status === 'progress' ? `
+    <div class="checkin-row">
+      <label>체크할 날짜</label>
+      <input type="date" class="checkin-date" data-id="${p.id}" value="${selDate}">
+    </div>` : ''}
     <div class="card-actions">
       ${p.status === 'progress' ? `
-        <button class="${checkedRegularToday ? 'checked' : 'primary'}" data-action="checkRegular" data-id="${p.id}">${checkedRegularToday ? '일반모임 체크됨 ✓' : '오늘 일반모임 체크'}</button>
-        <button class="${checkedPeerToday ? 'checked' : 'plant'}" data-action="checkPeer" data-id="${p.id}">${checkedPeerToday ? '동기모임 체크됨 ✓' : '오늘 동기모임 체크'}</button>
+        <button class="${checkedRegularToday ? 'checked' : 'primary'}" data-action="checkRegular" data-id="${p.id}">${checkedRegularToday ? '일반모임 체크됨 ✓' : '일반모임 체크'}</button>
+        <button class="${checkedPeerToday ? 'checked' : 'plant'}" data-action="checkPeer" data-id="${p.id}">${checkedPeerToday ? '동기모임 체크됨 ✓' : '동기모임 체크'}</button>
         <button data-action="edit" data-id="${p.id}">편집</button>
         <button class="plant" data-action="plant" data-id="${p.id}" ${count<1?'style="opacity:.5"':''}>등순 처리</button>
       ` : `
@@ -440,7 +408,7 @@ function escapeHtml(s){
 
 function render(){
   const search = $('searchInput').value.trim().toLowerCase();
-  let people = [...(data.people || [])];
+  let people = [...data.people];
 
   if(currentTab === 'progress') people = people.filter(p=>p.status==='progress');
   if(currentTab === 'planted') people = people.filter(p=>p.status==='planted');
@@ -460,7 +428,15 @@ function render(){
   $('statPlanted').textContent = data.people.filter(p=>p.status==='planted').length;
 }
 
-// Event Delegations
+// Date picker per card
+$('list').addEventListener('change', (e)=>{
+  const inp = e.target.closest('.checkin-date');
+  if(!inp) return;
+  checkinDates[inp.dataset.id] = inp.value;
+  render();
+});
+
+// Event delegation for card actions
 $('list').addEventListener('click', (e)=>{
   const btn = e.target.closest('[data-action]');
   if(!btn) return;
@@ -470,7 +446,7 @@ $('list').addEventListener('click', (e)=>{
   if(!p) return;
 
   if(action === 'checkRegular' || action === 'checkPeer'){
-    const t = todayStr();
+    const t = checkinDates[id] || todayStr();
     const type = action === 'checkPeer' ? 'peer' : 'regular';
     const idx = p.attendance.findIndex(a=>a.date===t);
     if(idx >= 0){
@@ -511,6 +487,7 @@ $('list').addEventListener('click', (e)=>{
   }
 });
 
+// Tabs
 document.querySelectorAll('.tabs button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
@@ -522,6 +499,7 @@ document.querySelectorAll('.tabs button').forEach(btn=>{
 
 $('searchInput').addEventListener('input', render);
 
+// Add/Edit form
 function openForm(p){
   editingId = p ? p.id : null;
   $('formTitle').textContent = p ? '새친구 정보 수정' : '새친구 등록';
@@ -561,6 +539,7 @@ $('saveForm').addEventListener('click', ()=>{
   showToast('저장했어요.');
 });
 
+// Plant form
 $('cancelPlant').addEventListener('click', ()=>$('overlayPlant').classList.remove('open'));
 $('overlayPlant').addEventListener('click', (e)=>{ if(e.target.id==='overlayPlant') $('overlayPlant').classList.remove('open'); });
 $('savePlant').addEventListener('click', ()=>{
@@ -575,87 +554,17 @@ $('savePlant').addEventListener('click', ()=>{
   showToast(`${p.name}님이 ${soon}으로 등순했어요 🌱`);
 });
 
-function downloadFile(blob, filename){
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
+$('refreshBtn').addEventListener('click', ()=>loadData(false));
 
-$('btnExportJson').addEventListener('click', ()=>{
-  const jsonStr = JSON.stringify(data, null, 2);
-  const blob = new Blob([jsonStr], { type: 'application/json' });
-  downloadFile(blob, `새친구_백업_${todayStr()}.json`);
-  showToast('JSON 백업 파일이 다운로드되었습니다.');
-});
-
-$('btnImportJson').addEventListener('click', ()=> $('importJsonInput').click());
-$('importJsonInput').addEventListener('change', (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (event)=>{
-    try{
-      const imported = JSON.parse(event.target.result);
-      if(!imported || !Array.isArray(imported.people)){
-        throw new Error('올바른 백업 형식이 아닙니다.');
-      }
-      if(confirm(`기존 데이터를 덮어쓰고 ${imported.people.length}명의 데이터를 복원할까요?`)){
-        data = imported;
-        migrateData();
-        saveData();
-        render();
-        $('overlayBackup').classList.remove('open');
-        showToast('데이터를 성공적으로 복원했습니다.');
-      }
-    }catch(err){
-      alert('백업 파일을 불러오는 중 오류가 발생했습니다: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
-});
-
-$('btnExportCsv').addEventListener('click', ()=>{
-  const headers = ['이름', '상태', '배속순', '첫방문일', '등순일', '연락처', '총출석횟수', '동기모임횟수', '출석날짜목록', '메모'];
-  const rows = data.people.map(p => {
-    const statusText = p.status === 'planted' ? '등순완료' : '진행중';
-    const peerCount = p.attendance.filter(a=>a.type==='peer').length;
-    const datesStr = p.attendance.map(a => `${a.date}(${a.type==='peer'?'동기':'일반'})`).join('; ');
-    
-    return [
-      `"${(p.name||'').replace(/"/g, '""')}"`,
-      `"${statusText}"`,
-      `"${(p.soonName||'').replace(/"/g, '""')}"`,
-      `"${p.firstVisitDate||''}"`,
-      `"${p.plantedDate||''}"`,
-      `"${(p.phone||'').replace(/"/g, '""')}"`,
-      p.attendance.length,
-      peerCount,
-      `"${datesStr.replace(/"/g, '""')}"`,
-      `"${(p.note||'').replace(/"/g, '""')}"`
-    ].join(',');
-  });
-
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  downloadFile(blob, `새친구_명단_${todayStr()}.csv`);
-  showToast('엑셀(CSV) 파일이 다운로드되었습니다.');
-});
-
-$('backupModalBtn').addEventListener('click', ()=> $('overlayBackup').classList.add('open'));
-$('closeBackup').addEventListener('click', ()=> $('overlayBackup').classList.remove('open'));
-$('overlayBackup').addEventListener('click', (e)=>{ if(e.target.id==='overlayBackup') $('overlayBackup').classList.remove('open'); });
-
-$('refreshBtn').addEventListener('click', loadData);
-
-// 초기 실행
-window.addEventListener('DOMContentLoaded', loadData);
-loadData();
+// init
+(async function init(){
+  await loadData(false);
+  render();
+  setInterval(()=>{
+    const anyOpen = document.querySelector('.overlay.open');
+    if(!anyOpen) loadData(true).then(()=>{ if(currentTab) render(); });
+  }, 7000);
+})();
 </script>
 </body>
 </html>
