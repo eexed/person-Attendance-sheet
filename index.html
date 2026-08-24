@@ -228,8 +228,9 @@
   .backup-card button{
     width:100%; padding:10px; border-radius:8px; border:1px solid var(--line);
     background:var(--surface); font-family:inherit; font-size:13px; font-weight:600;
-    cursor:pointer; color:var(--ink);
+    cursor:pointer; color:var(--ink); margin-bottom:6px;
   }
+  .backup-card button:last-child{margin-bottom:0;}
 
   .toast{
     position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff;
@@ -516,9 +517,10 @@
 
     <div class="backup-card">
       <h3>엑셀(CSV) 내보내기</h3>
-      <p>교인 명단과 출석 현황, 회계 장부 데이터를 각각 CSV 파일로 받습니다.</p>
+      <p>원하는 대상과 장부 내역을 엑셀(CSV) 파일로 다운로드합니다.</p>
+      <button id="btnExportReadyCsv" style="background:var(--accent); color:#fff; border:none;">🌱 등순 준비완료 명단 CSV</button>
       <div style="display:flex;gap:8px;">
-        <button id="btnExportCsv" style="flex:1;">출석 명단 CSV</button>
+        <button id="btnExportCsv" style="flex:1;">전체 출석 명단 CSV</button>
         <button id="btnExportFinanceCsv" style="flex:1;">회계 장부 CSV</button>
       </div>
     </div>
@@ -640,7 +642,6 @@ function migrateData(){
 
 /* ================== 8 Weeks Absent Calculation ================== */
 function getAbsentDays(p){
-  // 최근 출석 날짜 기준, 출석 기록이 없다면 첫 방문일 기준
   let lastDateStr = p.firstVisitDate || todayStr();
   if(p.attendance && p.attendance.length > 0){
     lastDateStr = p.attendance[p.attendance.length - 1].date;
@@ -652,7 +653,6 @@ function getAbsentDays(p){
 }
 
 function is8WeeksAbsent(p){
-  // 진행중 상태인 대상자 중 8주(56일) 이상 미출석 시 경고
   return p.status === 'progress' && getAbsentDays(p) >= 56;
 }
 
@@ -1311,9 +1311,9 @@ $('importJsonInput').addEventListener('change', (e)=>{
   e.target.value = '';
 });
 
-$('btnExportCsv').addEventListener('click', ()=>{
+function generatePeopleCsv(peopleList){
   const headers = ['이름', '상태', '배속순', '첫방문일', '등순일', '연락처', '총출석횟수', '동기모임횟수', '8주이상결석여부', '출석날짜목록', '메모'];
-  const rows = data.people.map(p => {
+  const rows = peopleList.map(p => {
     let statusText = '진행중';
     if(p.status === 'planted') statusText = '등순완료';
     else if(p.status === 'absent') statusText = '장기결석';
@@ -1338,10 +1338,26 @@ $('btnExportCsv').addEventListener('click', ()=>{
     ].join(',');
   });
 
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+  return '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+}
+
+$('btnExportCsv').addEventListener('click', ()=>{
+  const csvContent = generatePeopleCsv(data.people);
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  downloadFile(blob, `새친구_명단_${todayStr()}.csv`);
-  showToast('출석 명단 CSV 파일이 다운로드되었습니다.');
+  downloadFile(blob, `새친구_전체명단_${todayStr()}.csv`);
+  showToast('전체 출석 명단 CSV 파일이 다운로드되었습니다.');
+});
+
+$('btnExportReadyCsv').addEventListener('click', ()=>{
+  const readyList = data.people.filter(p => isFullyReady(p));
+  if(readyList.length === 0){
+    showToast('등순 준비완료된 대상자가 없습니다.');
+    return;
+  }
+  const csvContent = generatePeopleCsv(readyList);
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  downloadFile(blob, `등순준비완료_명단_${todayStr()}.csv`);
+  showToast(`등순 준비완료 ${readyList.length}명 CSV 파일이 다운로드되었습니다.`);
 });
 
 $('btnExportFinanceCsv').addEventListener('click', ()=>{
