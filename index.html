@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-<title>새친구 · 뿌리내리기</title>
+<title>새친구 · 뿌리내리기 & 회계장부</title>
 
 <!-- 모바일 웹앱 전체화면 및 앱 이름 설정 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -62,9 +62,21 @@
   header.top h1{font-size:26px; margin:0 0 4px; font-weight:700;}
   header.top p{margin:0; font-size:13px; color:#C9C4AE; line-height:1.5;}
 
-  .stats{display:flex; gap:10px; margin-top:18px;}
+  /* Main View Switcher */
+  .view-nav{
+    display:flex; background:rgba(0,0,0,0.25); border-radius:12px; padding:3px; margin-top:14px;
+  }
+  .view-nav button{
+    flex:1; padding:8px; border:none; background:transparent; border-radius:9px;
+    color:#C9C4AE; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;
+  }
+  .view-nav button.active{
+    background:var(--accent); color:#fff;
+  }
+
+  .stats{display:flex; gap:10px; margin-top:14px;}
   .stat{flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:10px 8px; text-align:center;}
-  .stat .num{font-size:20px; font-weight:700; font-family:'Gowun Batang',serif; color:#F3EEDF;}
+  .stat .num{font-size:18px; font-weight:700; font-family:'Gowun Batang',serif; color:#F3EEDF;}
   .stat .lbl{font-size:11px; color:#B7B29C; margin-top:2px;}
 
   .sync-row{display:flex; align-items:center; justify-content:space-between; margin-top:14px; font-size:11px; color:#9FA791;}
@@ -73,11 +85,11 @@
   .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--leaf);margin-right:5px;box-shadow:0 0 0 3px rgba(91,138,90,0.25);}
 
   .search-add{display:flex; gap:8px; margin:16px 0 10px;}
-  .search-add input{
+  .search-add input, .search-add select{
     flex:1; padding:11px 14px; border-radius:12px; border:1px solid var(--line);
     background:var(--surface); font-family:inherit; font-size:14px; color:var(--ink);
   }
-  .search-add input:focus{outline:2px solid var(--accent-soft); outline-offset:1px;}
+  .search-add input:focus, .search-add select:focus{outline:2px solid var(--accent-soft); outline-offset:1px;}
   .btn-add{
     width:44px; height:44px; border-radius:12px; border:none; background:var(--accent);
     color:#fff; font-size:22px; cursor:pointer; box-shadow:var(--shadow); flex-shrink:0;
@@ -106,6 +118,8 @@
   .badge{font-size:11px; padding:3px 9px; border-radius:20px; font-weight:600; white-space:nowrap;}
   .badge.progress{background:#E4EEE0; color:var(--leaf);}
   .badge.planted{background:var(--planted-bg); color:var(--planted);}
+  .badge.main-acc{background:#E4EEE0; color:var(--leaf);}
+  .badge.sub-acc{background:var(--peer-bg); color:var(--peer);}
 
   .leaves{display:flex; gap:4px; margin:12px 0 6px; align-items:center; flex-wrap:wrap;}
   .leaf-count{font-size:12px; color:var(--ink-soft); margin-left:4px; font-weight:600;}
@@ -137,6 +151,16 @@
   .link-row{display:flex; gap:14px; margin-top:8px;}
   .link-row a{font-size:12px; color:var(--ink-soft); text-decoration:underline; cursor:pointer;}
   .link-row a.danger{color:var(--danger);}
+
+  /* Accounting Specific Styles */
+  .budget-summary{
+    background:var(--surface); border-radius:16px; padding:16px; margin-bottom:14px;
+    box-shadow:var(--shadow); border-left:4px solid var(--accent);
+  }
+  .budget-row{display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;}
+  .budget-row.total{border-top:1px dashed var(--line); padding-top:8px; font-weight:700; font-size:14.5px; margin-top:8px;}
+  .amount-income{color:var(--leaf); font-weight:700;}
+  .amount-expense{color:var(--danger); font-weight:700;}
 
   .fab-hint{text-align:center; font-size:11px; color:var(--ink-soft); margin:20px 0 8px;}
 
@@ -195,37 +219,76 @@
   <header class="top">
     <div class="eyebrow">NEW FRIEND TEAM</div>
     <h1>새친구, 뿌리내리다</h1>
-    <p>새로 오신 분이 예배 후 모임을 거쳐 순으로 등순하기까지의 여정을 기록해요.</p>
-    <div class="stats">
+    <p id="headerSub">새로 오신 분이 모임을 거쳐 순으로 등순하기까지의 여정을 기록해요.</p>
+    
+    <div class="view-nav">
+      <button id="viewBtnAttendance" class="active">출석부</button>
+      <button id="viewBtnFinance">회계 장부</button>
+    </div>
+
+    <!-- Attendance Header Stats -->
+    <div class="stats" id="attendanceStats">
       <div class="stat"><div class="num" id="statProgress">0</div><div class="lbl">함께 하는 중</div></div>
       <div class="stat"><div class="num" id="statReady">0</div><div class="lbl">등순 준비완료</div></div>
       <div class="stat"><div class="num" id="statPlanted">0</div><div class="lbl">등순완료</div></div>
     </div>
+
+    <!-- Finance Header Stats -->
+    <div class="stats" id="financeStats" style="display:none;">
+      <div class="stat"><div class="num" id="statMainTotal">0</div><div class="lbl">메인 계좌 잔액</div></div>
+      <div class="stat"><div class="num" id="statSubTotal">0</div><div class="lbl">서브 계좌 잔액</div></div>
+    </div>
+
     <div class="sync-row">
       <span><span class="dot"></span><span id="syncText">정상 작동 중</span></span>
       <div class="sync-actions">
+        <button id="budgetSettingBtn" style="display:none;">예산 설정 ⚙</button>
         <button id="backupModalBtn">데이터 관리 ⚙</button>
         <button id="refreshBtn">새로고침</button>
       </div>
     </div>
   </header>
 
-  <div class="search-add">
-    <input type="text" id="searchInput" placeholder="이름으로 검색">
-    <button class="btn-add" id="openAdd">＋</button>
+  <!-- Attendance Container -->
+  <div id="attendanceContainer">
+    <div class="search-add">
+      <input type="text" id="searchInput" placeholder="이름으로 검색">
+      <button class="btn-add" id="openAdd">＋</button>
+    </div>
+
+    <div class="tabs">
+      <button data-tab="progress" class="active">진행중</button>
+      <button data-tab="planted">등순완료</button>
+      <button data-tab="all">전체</button>
+    </div>
+
+    <div id="list"></div>
   </div>
 
-  <div class="tabs">
-    <button data-tab="progress" class="active">진행중</button>
-    <button data-tab="planted">등순완료</button>
-    <button data-tab="all">전체</button>
+  <!-- Finance Container -->
+  <div id="financeContainer" style="display:none;">
+    <div class="search-add">
+      <input type="month" id="financeMonthSelect">
+      <button class="btn-add" id="openAddFinance">＋</button>
+    </div>
+
+    <div class="tabs" id="financeTabs">
+      <button data-ftab="all" class="active">전체 내역</button>
+      <button data-ftab="main">메인 계좌</button>
+      <button data-ftab="sub">서브 계좌</button>
+    </div>
+
+    <div class="budget-summary" id="monthlySummaryBox">
+      <!-- Calculated Budget & Carryover -->
+    </div>
+
+    <div id="financeList"></div>
   </div>
 
-  <div id="list"></div>
   <div class="fab-hint">이 화면을 사파리/크롬에서 '홈 화면에 추가'하면 앱처럼 쓸 수 있어요.</div>
 </div>
 
-<!-- Add/Edit Modal -->
+<!-- Attendance Modals -->
 <div class="overlay" id="overlayForm">
   <div class="sheet">
     <h2 id="formTitle">새친구 등록</h2>
@@ -258,7 +321,6 @@
   </div>
 </div>
 
-<!-- Custom Attendance Date Modal (과거/특정 날짜 출석 추가) -->
 <div class="overlay" id="overlayCustomAtt">
   <div class="sheet">
     <h2 id="customAttTitle">날짜별 출석 기록</h2>
@@ -280,7 +342,6 @@
   </div>
 </div>
 
-<!-- Plant Modal -->
 <div class="overlay" id="overlayPlant">
   <div class="sheet">
     <h2>등순 처리</h2>
@@ -301,27 +362,97 @@
   </div>
 </div>
 
+<!-- Finance Modals -->
+<div class="overlay" id="overlayFinance">
+  <div class="sheet">
+    <h2 id="financeFormTitle">수입/지출 내역 등록</h2>
+    <div class="field">
+      <label>날짜 *</label>
+      <input type="date" id="finDate">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>구분 *</label>
+        <select id="finType">
+          <option value="expense">지출</option>
+          <option value="income">수입(별도 입금)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>계좌 선택 *</label>
+        <select id="finAccount">
+          <option value="main">메인 계좌</option>
+          <option value="sub">서브 계좌</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>항목/내용 *</label>
+      <input type="text" id="finDesc" placeholder="예: 3주차 다과비, 교재 구입">
+    </div>
+    <div class="field">
+      <label>금액 (원) *</label>
+      <input type="number" id="finAmount" placeholder="예: 25000" step="100">
+    </div>
+    <div class="field">
+      <label>비고/메모</label>
+      <input type="text" id="finMemo" placeholder="영수증 번호, 결제자 등">
+    </div>
+    <div class="sheet-actions">
+      <button class="cancel" id="cancelFinance">취소</button>
+      <button class="save" id="saveFinance">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Budget Setting Modal -->
+<div class="overlay" id="overlayBudget">
+  <div class="sheet">
+    <h2>월별 지원금 설정</h2>
+    <p style="font-size:12.5px;color:var(--ink-soft);margin-top:-6px;">매달 자동으로 배정되는 정기 지원금입니다. 쓰고 남은 잔액은 다음 달로 자동 이월됩니다.</p>
+    <div class="field">
+      <label>메인 계좌 월 정기 지원금 (원)</label>
+      <input type="number" id="bMainGrant" step="1000" placeholder="0">
+    </div>
+    <div class="field">
+      <label>서브 계좌 월 정기 지원금 (원)</label>
+      <input type="number" id="bSubGrant" step="1000" placeholder="0">
+    </div>
+    <div class="field">
+      <label>지원금 정기 배정 시작월</label>
+      <input type="month" id="bStartMonth">
+    </div>
+    <div class="sheet-actions">
+      <button class="cancel" id="cancelBudget">취소</button>
+      <button class="save" id="saveBudget">설정 저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- Backup / Restore Modal -->
 <div class="overlay" id="overlayBackup">
   <div class="sheet">
     <h2>데이터 백업 및 복원</h2>
     <div class="backup-card">
       <h3>JSON 전체 백업</h3>
-      <p>기록된 모든 출석 및 개인 데이터를 JSON 파일로 다운로드합니다.</p>
+      <p>출석 및 모든 회계 데이터를 JSON 파일로 다운로드합니다.</p>
       <button id="btnExportJson">JSON 백업 파일 다운로드</button>
     </div>
 
     <div class="backup-card">
       <h3>JSON 데이터 복원</h3>
-      <p>기존에 백업해둔 JSON 파일을 불러와 데이터를 복구합니다.</p>
+      <p>기존에 백업해둔 JSON 파일을 불러와 복구합니다.</p>
       <input type="file" id="importJsonInput" accept=".json" style="display:none">
       <button id="btnImportJson">백업 파일(.json) 불러오기</button>
     </div>
 
     <div class="backup-card">
       <h3>엑셀(CSV) 내보내기</h3>
-      <p>교인 명단과 출석 현황을 스프레드시트나 엑셀에서 열 수 있는 CSV로 받습니다.</p>
-      <button id="btnExportCsv">엑셀(CSV) 파일 다운로드</button>
+      <p>교인 명단과 출석 현황, 회계 장부 데이터를 각각 CSV 파일로 받습니다.</p>
+      <div style="display:flex;gap:8px;">
+        <button id="btnExportCsv" style="flex:1;">출석 명단 CSV</button>
+        <button id="btnExportFinanceCsv" style="flex:1;">회계 장부 CSV</button>
+      </div>
     </div>
 
     <div class="sheet-actions">
@@ -334,15 +465,32 @@
 
 <script>
 const STORAGE_KEY = 'church-new-friends-v1';
-let data = { people: [] };
+let currentView = 'attendance'; // 'attendance' | 'finance'
+let data = {
+  people: [],
+  finance: {
+    settings: {
+      mainMonthlyGrant: 0,
+      subMonthlyGrant: 0,
+      startMonth: new Date().toISOString().slice(0,7)
+    },
+    transactions: []
+  }
+};
+
 let currentTab = 'progress';
+let currentFinanceTab = 'all';
+let currentMonth = new Date().toISOString().slice(0,7);
+
 let editingId = null;
 let plantingId = null;
 let customAttId = null;
 let expandedId = null;
+let editingFinanceId = null;
 
 const $ = (id) => document.getElementById(id);
 const todayStr = () => new Date().toISOString().slice(0,10);
+const formatMoney = (n) => Number(n || 0).toLocaleString('ko-KR') + '원';
 
 function showToast(msg){
   const t = $('toast');
@@ -359,12 +507,26 @@ function loadData(){
       data = JSON.parse(str);
       migrateData();
     } else {
-      data = { people: [] };
+      initEmptyData();
     }
   }catch(e){
-    data = { people: [] };
+    initEmptyData();
   }
   render();
+}
+
+function initEmptyData(){
+  data = {
+    people: [],
+    finance: {
+      settings: {
+        mainMonthlyGrant: 100000,
+        subMonthlyGrant: 0,
+        startMonth: new Date().toISOString().slice(0,7)
+      },
+      transactions: []
+    }
+  };
 }
 
 function saveData(){
@@ -377,14 +539,80 @@ function saveData(){
 }
 
 function migrateData(){
-  if(!data || !Array.isArray(data.people)) data = { people: [] };
+  if(!data || typeof data !== 'object') initEmptyData();
+  if(!Array.isArray(data.people)) data.people = [];
   data.people.forEach(p=>{
     if(!Array.isArray(p.attendance)) p.attendance = [];
     p.attendance = p.attendance.map(a => typeof a === 'string' ? {date:a, type:'regular'} : a);
     p.attendance.sort((a,b)=>a.date.localeCompare(b.date));
   });
+
+  if(!data.finance){
+    data.finance = {
+      settings: {
+        mainMonthlyGrant: 0,
+        subMonthlyGrant: 0,
+        startMonth: new Date().toISOString().slice(0,7)
+      },
+      transactions: []
+    };
+  }
+  if(!data.finance.settings) {
+    data.finance.settings = { mainMonthlyGrant: 0, subMonthlyGrant: 0, startMonth: new Date().toISOString().slice(0,7) };
+  }
+  if(!Array.isArray(data.finance.transactions)) data.finance.transactions = [];
 }
 
+/* ================== Accounting Calculation Core ================== */
+function getMonthDiff(fromMonth, toMonth){
+  const [y1, m1] = fromMonth.split('-').map(Number);
+  const [y2, m2] = toMonth.split('-').map(Number);
+  return (y2 - y1) * 12 + (m2 - m1);
+}
+
+function calculateAccountMonthly(accountType, targetMonth){
+  const startMonth = data.finance.settings.startMonth || targetMonth;
+  const grantAmount = accountType === 'main' 
+    ? Number(data.finance.settings.mainMonthlyGrant || 0) 
+    : Number(data.finance.settings.subMonthlyGrant || 0);
+
+  // 이전 달까지의 누적 계산
+  let previousBalance = 0;
+  if(targetMonth > startMonth){
+    const diff = getMonthDiff(startMonth, targetMonth);
+    const priorGrants = Math.max(0, diff) * grantAmount;
+    
+    // targetMonth 이전의 트랜잭션들
+    const priorTx = data.finance.transactions.filter(t => t.account === accountType && t.date.slice(0,7) >= startMonth && t.date.slice(0,7) < targetMonth);
+    const priorIncome = priorTx.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount), 0);
+    const priorExpense = priorTx.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0);
+
+    previousBalance = priorGrants + priorIncome - priorExpense;
+  }
+
+  // 당월 트랜잭션
+  const currentMonthTx = data.finance.transactions.filter(t => t.account === accountType && t.date.slice(0,7) === targetMonth);
+  const currentGrant = targetMonth >= startMonth ? grantAmount : 0;
+  const currentIncome = currentMonthTx.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount), 0);
+  const currentExpense = currentMonthTx.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0);
+
+  const finalBalance = previousBalance + currentGrant + currentIncome - currentExpense;
+
+  return {
+    previousBalance,
+    currentGrant,
+    currentIncome,
+    currentExpense,
+    finalBalance
+  };
+}
+
+function calculateTotalAccountBalance(accountType){
+  const targetMonth = currentMonth;
+  return calculateAccountMonthly(accountType, targetMonth).finalBalance;
+}
+
+/* ================== Render Logic ================== */
 function leafSvg(filled, type){
   const color = !filled ? 'var(--leaf-empty)' : (type === 'peer' ? 'var(--peer)' : 'var(--leaf)');
   return `<svg width="15" height="15" viewBox="0 0 24 24" fill="${color}"><path d="M12 2C7 2 2 7 2 13c0 5 4 9 9 9 1-6 2-11 9-15C16 3 14 2 12 2z"/></svg>`;
@@ -461,11 +689,34 @@ function personCard(p){
   </div>`;
 }
 
+function financeCard(t){
+  const isIncome = t.type === 'income';
+  const isMain = t.account === 'main';
+  return `
+  <div class="card">
+    <div class="card-top">
+      <div>
+        <p class="card-name" style="font-size:16px;">${escapeHtml(t.desc)}</p>
+        <div class="card-meta">${t.date} · <span class="badge ${isMain ? 'main-acc':'sub-acc'}">${isMain ? '메인':'서브'}</span> ${t.memo ? ' · ' + escapeHtml(t.memo) : ''}</div>
+      </div>
+      <div style="text-align:right;">
+        <span class="${isIncome ? 'amount-income' : 'amount-expense'}" style="font-size:16px;">
+          ${isIncome ? '+' : '-'}${formatMoney(t.amount)}
+        </span>
+      </div>
+    </div>
+    <div class="link-row" style="justify-content:flex-end;margin-top:6px;">
+      <a data-faction="editFin" data-id="${t.id}">수정</a>
+      <a data-faction="deleteFin" data-id="${t.id}" class="danger">삭제</a>
+    </div>
+  </div>`;
+}
+
 function escapeHtml(s){
   return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-function render(){
+function renderAttendance(){
   const search = $('searchInput').value.trim().toLowerCase();
   let people = [...(data.people || [])];
 
@@ -487,7 +738,95 @@ function render(){
   $('statPlanted').textContent = data.people.filter(p=>p.status==='planted').length;
 }
 
-// Event Delegations
+function renderFinance(){
+  $('financeMonthSelect').value = currentMonth;
+  const selMonth = currentMonth;
+
+  // 메인 및 서브 계산
+  const mainCalc = calculateAccountMonthly('main', selMonth);
+  const subCalc = calculateAccountMonthly('sub', selMonth);
+
+  // 헤더 잔액 요약
+  $('statMainTotal').textContent = formatMoney(mainCalc.finalBalance);
+  $('statSubTotal').textContent = formatMoney(subCalc.finalBalance);
+
+  // 월별 요약 렌더링
+  let summaryHtml = `<div style="font-weight:700;margin-bottom:8px;font-size:14px;color:var(--ink);">${selMonth} 예산 및 이월 정산</div>`;
+  
+  if(currentFinanceTab === 'all' || currentFinanceTab === 'main'){
+    summaryHtml += `
+    <div style="margin-top:6px;padding:6px 0;border-bottom:1px dashed var(--line);">
+      <div style="font-weight:700;font-size:12.5px;color:var(--leaf);margin-bottom:4px;">[ 메인 계좌 ]</div>
+      <div class="budget-row"><span>전월 이월금</span><span>${formatMoney(mainCalc.previousBalance)}</span></div>
+      <div class="budget-row"><span>당월 정기 지원금</span><span>${formatMoney(mainCalc.currentGrant)}</span></div>
+      <div class="budget-row"><span>기타 수입 / 지출</span><span>+${formatMoney(mainCalc.currentIncome)} / <span class="amount-expense">-${formatMoney(mainCalc.currentExpense)}</span></span></div>
+      <div class="budget-row" style="font-weight:600;color:var(--ink);"><span>메인 월말 잔액 (이월 예정)</span><span>${formatMoney(mainCalc.finalBalance)}</span></div>
+    </div>`;
+  }
+
+  if(currentFinanceTab === 'all' || currentFinanceTab === 'sub'){
+    summaryHtml += `
+    <div style="margin-top:6px;padding:6px 0;">
+      <div style="font-weight:700;font-size:12.5px;color:var(--peer);margin-bottom:4px;">[ 서브 계좌 ]</div>
+      <div class="budget-row"><span>전월 이월금</span><span>${formatMoney(subCalc.previousBalance)}</span></div>
+      <div class="budget-row"><span>당월 정기 지원금</span><span>${formatMoney(subCalc.currentGrant)}</span></div>
+      <div class="budget-row"><span>기타 수입 / 지출</span><span>+${formatMoney(subCalc.currentIncome)} / <span class="amount-expense">-${formatMoney(subCalc.currentExpense)}</span></span></div>
+      <div class="budget-row" style="font-weight:600;color:var(--ink);"><span>서브 월말 잔액 (이월 예정)</span><span>${formatMoney(subCalc.finalBalance)}</span></div>
+    </div>`;
+  }
+
+  $('monthlySummaryBox').innerHTML = summaryHtml;
+
+  // 트랜잭션 필터링
+  let txList = [...data.finance.transactions].filter(t => t.date.slice(0,7) === selMonth);
+  if(currentFinanceTab === 'main') txList = txList.filter(t => t.account === 'main');
+  if(currentFinanceTab === 'sub') txList = txList.filter(t => t.account === 'sub');
+  txList.sort((a,b)=>b.date.localeCompare(a.date));
+
+  const fListEl = $('financeList');
+  if(txList.length === 0){
+    fListEl.innerHTML = `<div class="empty"><div class="big">💰</div><p>${selMonth} 내역이 없습니다.</p><p>오른쪽 위 ＋ 버튼으로 지출 또는 수입을 기록하세요.</p></div>`;
+  } else {
+    fListEl.innerHTML = txList.map(financeCard).join('');
+  }
+}
+
+function render(){
+  if(currentView === 'attendance'){
+    $('attendanceContainer').style.display = 'block';
+    $('financeContainer').style.display = 'none';
+    $('attendanceStats').style.display = 'flex';
+    $('financeStats').style.display = 'none';
+    $('budgetSettingBtn').style.display = 'none';
+    $('headerSub').textContent = '새로 오신 분이 모임을 거쳐 순으로 등순하기까지의 여정을 기록해요.';
+    renderAttendance();
+  } else {
+    $('attendanceContainer').style.display = 'none';
+    $('financeContainer').style.display = 'block';
+    $('attendanceStats').style.display = 'none';
+    $('financeStats').style.display = 'flex';
+    $('budgetSettingBtn').style.display = 'inline-block';
+    $('headerSub').textContent = '지원금 배정 및 메인/서브 계좌의 지출과 자동 이월금을 관리해요.';
+    renderFinance();
+  }
+}
+
+/* ================== View Switcher ================== */
+$('viewBtnAttendance').addEventListener('click', ()=>{
+  currentView = 'attendance';
+  $('viewBtnAttendance').classList.add('active');
+  $('viewBtnFinance').classList.remove('active');
+  render();
+});
+
+$('viewBtnFinance').addEventListener('click', ()=>{
+  currentView = 'finance';
+  $('viewBtnFinance').classList.add('active');
+  $('viewBtnAttendance').classList.remove('active');
+  render();
+});
+
+/* ================== Attendance Event Delegations ================== */
 $('list').addEventListener('click', (e)=>{
   const btn = e.target.closest('[data-action]');
   if(!btn) return;
@@ -545,7 +884,6 @@ $('list').addEventListener('click', (e)=>{
   }
 });
 
-// Custom Attendance Add Logic
 $('cancelCustomAtt').addEventListener('click', ()=> $('overlayCustomAtt').classList.remove('open'));
 $('overlayCustomAtt').addEventListener('click', (e)=>{ if(e.target.id==='overlayCustomAtt') $('overlayCustomAtt').classList.remove('open'); });
 $('saveCustomAtt').addEventListener('click', ()=>{
@@ -569,9 +907,9 @@ $('saveCustomAtt').addEventListener('click', ()=>{
   $('overlayCustomAtt').classList.remove('open');
 });
 
-document.querySelectorAll('.tabs button').forEach(btn=>{
+document.querySelectorAll('.tabs button[data-tab]').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tabs button[data-tab]').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     currentTab = btn.dataset.tab;
     render();
@@ -633,6 +971,117 @@ $('savePlant').addEventListener('click', ()=>{
   showToast(`${p.name}님이 ${soon}으로 등순했어요 🌱`);
 });
 
+/* ================== Finance Logic & Events ================== */
+$('financeMonthSelect').addEventListener('change', (e)=>{
+  if(e.target.value){
+    currentMonth = e.target.value;
+    render();
+  }
+});
+
+document.querySelectorAll('#financeTabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('#financeTabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFinanceTab = btn.dataset.ftab;
+    render();
+  });
+});
+
+$('openAddFinance').addEventListener('click', ()=>openFinanceForm(null));
+function openFinanceForm(t){
+  editingFinanceId = t ? t.id : null;
+  $('financeFormTitle').textContent = t ? '내역 수정' : '수입/지출 내역 등록';
+  $('finDate').value = t ? t.date : todayStr();
+  $('finType').value = t ? t.type : 'expense';
+  $('finAccount').value = t ? t.account : 'main';
+  $('finDesc').value = t ? t.desc : '';
+  $('finAmount').value = t ? t.amount : '';
+  $('finMemo').value = t ? t.memo : '';
+  $('overlayFinance').classList.add('open');
+}
+
+$('cancelFinance').addEventListener('click', ()=> $('overlayFinance').classList.remove('open'));
+$('overlayFinance').addEventListener('click', (e)=>{ if(e.target.id==='overlayFinance') $('overlayFinance').classList.remove('open'); });
+
+$('saveFinance').addEventListener('click', ()=>{
+  const date = $('finDate').value;
+  const desc = $('finDesc').value.trim();
+  const amount = Number($('finAmount').value);
+  const type = $('finType').value;
+  const account = $('finAccount').value;
+  const memo = $('finMemo').value.trim();
+
+  if(!date || !desc || isNaN(amount) || amount <= 0){
+    showToast('날짜, 내용, 올바른 금액을 입력하세요.');
+    return;
+  }
+
+  if(editingFinanceId){
+    const t = data.finance.transactions.find(x=>x.id===editingFinanceId);
+    if(t){
+      t.date = date;
+      t.desc = desc;
+      t.amount = amount;
+      t.type = type;
+      t.account = account;
+      t.memo = memo;
+    }
+  } else {
+    data.finance.transactions.push({
+      id: 'fin_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      date, type, account, desc, amount, memo
+    });
+  }
+
+  saveData();
+  render();
+  $('overlayFinance').classList.remove('open');
+  showToast('내역을 저장했습니다.');
+});
+
+$('financeList').addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-faction]');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  const faction = btn.dataset.faction;
+  const t = data.finance.transactions.find(x=>x.id===id);
+  if(!t) return;
+
+  if(faction === 'editFin'){
+    openFinanceForm(t);
+  } else if(faction === 'deleteFin'){
+    if(confirm(`'${t.desc}' 내역을 삭제할까요?`)){
+      data.finance.transactions = data.finance.transactions.filter(x=>x.id!==id);
+      saveData();
+      render();
+      showToast('삭제했습니다.');
+    }
+  }
+});
+
+/* Budget Settings Modal Logic */
+$('budgetSettingBtn').addEventListener('click', ()=>{
+  $('bMainGrant').value = data.finance.settings.mainMonthlyGrant || 0;
+  $('bSubGrant').value = data.finance.settings.subMonthlyGrant || 0;
+  $('bStartMonth').value = data.finance.settings.startMonth || currentMonth;
+  $('overlayBudget').classList.add('open');
+});
+
+$('cancelBudget').addEventListener('click', ()=> $('overlayBudget').classList.remove('open'));
+$('overlayBudget').addEventListener('click', (e)=>{ if(e.target.id==='overlayBudget') $('overlayBudget').classList.remove('open'); });
+
+$('saveBudget').addEventListener('click', ()=>{
+  data.finance.settings.mainMonthlyGrant = Number($('bMainGrant').value) || 0;
+  data.finance.settings.subMonthlyGrant = Number($('bSubGrant').value) || 0;
+  data.finance.settings.startMonth = $('bStartMonth').value || currentMonth;
+  saveData();
+  render();
+  $('overlayBudget').classList.remove('open');
+  showToast('예산 설정이 저장되었습니다.');
+});
+
+/* ================== Backup & Export ================== */
 function downloadFile(blob, filename){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -647,7 +1096,7 @@ function downloadFile(blob, filename){
 $('btnExportJson').addEventListener('click', ()=>{
   const jsonStr = JSON.stringify(data, null, 2);
   const blob = new Blob([jsonStr], { type: 'application/json' });
-  downloadFile(blob, `새친구_백업_${todayStr()}.json`);
+  downloadFile(blob, `새친구_통합데이터_${todayStr()}.json`);
   showToast('JSON 백업 파일이 다운로드되었습니다.');
 });
 
@@ -662,7 +1111,7 @@ $('importJsonInput').addEventListener('change', (e)=>{
       if(!imported || !Array.isArray(imported.people)){
         throw new Error('올바른 백업 형식이 아닙니다.');
       }
-      if(confirm(`기존 데이터를 덮어쓰고 ${imported.people.length}명의 데이터를 복원할까요?`)){
+      if(confirm(`기존 데이터를 덮어쓰고 복원하시겠습니까?`)){
         data = imported;
         migrateData();
         saveData();
@@ -702,7 +1151,24 @@ $('btnExportCsv').addEventListener('click', ()=>{
   const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   downloadFile(blob, `새친구_명단_${todayStr()}.csv`);
-  showToast('엑셀(CSV) 파일이 다운로드되었습니다.');
+  showToast('출석 명단 CSV 파일이 다운로드되었습니다.');
+});
+
+$('btnExportFinanceCsv').addEventListener('click', ()=>{
+  const headers = ['날짜', '계좌', '구분', '내역', '금액', '비고'];
+  const rows = data.finance.transactions.map(t => [
+    `"${t.date}"`,
+    `"${t.account === 'main' ? '메인계좌' : '서브계좌'}"`,
+    `"${t.type === 'income' ? '수입' : '지출'}"`,
+    `"${(t.desc||'').replace(/"/g, '""')}"`,
+    t.amount,
+    `"${(t.memo||'').replace(/"/g, '""')}"`
+  ].join(','));
+
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  downloadFile(blob, `새친구_회계장부_${todayStr()}.csv`);
+  showToast('회계 장부 CSV 파일이 다운로드되었습니다.');
 });
 
 $('backupModalBtn').addEventListener('click', ()=> $('overlayBackup').classList.add('open'));
