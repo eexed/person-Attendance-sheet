@@ -78,7 +78,7 @@
 
   .stats{display:flex; gap:6px; margin-top:14px;}
   .stat{flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:8px 4px; text-align:center;}
-  .stat .num{font-size:17px; font-weight:700; font-family:'Gowun Batang',serif; color:#F3EEDF;}
+  .stat .num{font-size:16px; font-weight:700; font-family:'Gowun Batang',serif; color:#F3EEDF;}
   .stat .lbl{font-size:10px; color:#B7B29C; margin-top:2px;}
 
   .sync-row{display:flex; align-items:center; justify-content:space-between; margin-top:14px; font-size:11px; color:#9FA791;}
@@ -99,14 +99,14 @@
   }
   .btn-add:active{transform:scale(0.96);}
 
-  /* Tabs with horizontal scroll if needed */
+  /* Tabs with horizontal scroll */
   .tabs{
     display:flex; gap:4px; margin-bottom:14px; background:var(--surface-2); padding:4px; border-radius:12px;
     overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
   }
   .tabs::-webkit-scrollbar{display:none;}
   .tabs button{
-    flex:1; min-width:max-content; padding:8px 8px; border:none; background:transparent; border-radius:9px;
+    flex:1; min-width:max-content; padding:8px 9px; border:none; background:transparent; border-radius:9px;
     font-family:inherit; font-size:12px; font-weight:600; color:var(--ink-soft); cursor:pointer; white-space:nowrap;
   }
   .tabs button.active{background:var(--surface); color:var(--ink); box-shadow:var(--shadow);}
@@ -119,16 +119,24 @@
     background:var(--surface); border-radius:16px; padding:16px; margin-bottom:12px;
     box-shadow:var(--shadow); border:1px solid rgba(31,51,39,0.05);
   }
+  .card.warn-border{
+    border:1.5px solid var(--warn);
+    background: #FFFDFC;
+  }
   .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
   .card-name{font-family:'Gowun Batang',serif; font-size:18px; font-weight:700; margin:0;}
   .card-meta{font-size:12px; color:var(--ink-soft); margin-top:3px;}
+  
+  .badge-group{display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end;}
   .badge{font-size:11px; padding:3px 9px; border-radius:20px; font-weight:600; white-space:nowrap;}
   .badge.progress{background:#E4EEE0; color:var(--leaf);}
   .badge.ready{background:#F8EAD0; color:var(--accent); font-weight:700;}
   .badge.planted{background:var(--planted-bg); color:var(--planted);}
   .badge.absent{background:var(--absent-bg); color:var(--absent);}
+  .badge.absent-warning{background:#FBEAE8; color:var(--warn); border:1px solid var(--warn);}
   .badge.main-acc{background:#E4EEE0; color:var(--leaf);}
   .badge.sub-acc{background:var(--peer-bg); color:var(--peer);}
+  .badge.cat{background:var(--surface-2); color:var(--ink-soft); border:1px solid var(--line);}
 
   .leaves{display:flex; gap:4px; margin:12px 0 6px; align-items:center; flex-wrap:wrap;}
   .leaf-count{font-size:12px; color:var(--ink-soft); margin-left:4px; font-weight:600;}
@@ -171,6 +179,14 @@
   .budget-row.total{border-top:1px dashed var(--line); padding-top:8px; font-weight:700; font-size:14.5px; margin-top:8px;}
   .amount-income{color:var(--leaf); font-weight:700;}
   .amount-expense{color:var(--danger); font-weight:700;}
+
+  /* Category Tag Management */
+  .cat-chips{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0;}
+  .cat-chip{
+    background:var(--surface-2); border:1px solid var(--line); padding:5px 10px; border-radius:14px;
+    font-size:12.5px; display:inline-flex; align-items:center; gap:6px; font-weight:600;
+  }
+  .cat-chip span.del{cursor:pointer; color:var(--warn); font-size:14px;}
 
   .fab-hint{text-align:center; font-size:11px; color:var(--ink-soft); margin:20px 0 8px;}
 
@@ -239,7 +255,8 @@
     <!-- Attendance Header Stats -->
     <div class="stats" id="attendanceStats">
       <div class="stat"><div class="num" id="statProgress">0</div><div class="lbl">진행중</div></div>
-      <div class="stat"><div class="num" id="statReady">0</div><div class="lbl">등순준비완료</div></div>
+      <div class="stat"><div class="num" id="statWarn" style="color:var(--accent-soft);">0</div><div class="lbl">8주+경고</div></div>
+      <div class="stat"><div class="num" id="statReady">0</div><div class="lbl">등순준비</div></div>
       <div class="stat"><div class="num" id="statPlanted">0</div><div class="lbl">등순완료</div></div>
       <div class="stat"><div class="num" id="statAbsent">0</div><div class="lbl">장기결석</div></div>
     </div>
@@ -253,6 +270,7 @@
     <div class="sync-row">
       <span><span class="dot"></span><span id="syncText">정상 작동 중</span></span>
       <div class="sync-actions">
+        <button id="categorySettingBtn" style="display:none;">카테고리 관리 🏷</button>
         <button id="budgetSettingBtn" style="display:none;">예산 설정 ⚙</button>
         <button id="backupModalBtn">데이터 관리 ⚙</button>
         <button id="refreshBtn">새로고침</button>
@@ -269,6 +287,7 @@
 
     <div class="tabs" id="attendanceTabs">
       <button data-tab="progress" class="active">진행중</button>
+      <button data-tab="warn">8주+ 결석경고</button>
       <button data-tab="ready">등순준비완료</button>
       <button data-tab="planted">등순완료</button>
       <button data-tab="absent">장기결석자</button>
@@ -408,6 +427,12 @@
       </div>
     </div>
     <div class="field">
+      <label>카테고리</label>
+      <select id="finCategory">
+        <!-- populated dynamically -->
+      </select>
+    </div>
+    <div class="field">
       <label>항목/내용 *</label>
       <input type="text" id="finDesc" placeholder="예: 3주차 다과비, 교재 구입">
     </div>
@@ -446,6 +471,28 @@
     <div class="sheet-actions">
       <button class="cancel" id="cancelBudget">취소</button>
       <button class="save" id="saveBudget">설정 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Category Setting Modal -->
+<div class="overlay" id="overlayCategory">
+  <div class="sheet">
+    <h2>지출 카테고리 관리</h2>
+    <p style="font-size:12.5px;color:var(--ink-soft);margin-top:-6px;">회계 장부에서 사용할 지출 카테고리를 추가하거나 삭제합니다.</p>
+    
+    <div class="field-row">
+      <div class="field" style="flex:2;">
+        <input type="text" id="newCatInput" placeholder="새 카테고리 (예: 선물, 다과)">
+      </div>
+      <button id="btnAddCat" style="flex:1; height:44px; border-radius:10px; border:none; background:var(--ink); color:#fff; font-weight:700; cursor:pointer;">추가</button>
+    </div>
+
+    <label style="font-size:12px; font-weight:600; color:var(--ink-soft);">등록된 카테고리 목록</label>
+    <div class="cat-chips" id="catChipsContainer"></div>
+
+    <div class="sheet-actions">
+      <button class="cancel" id="closeCategory">닫기</button>
     </div>
   </div>
 </div>
@@ -493,13 +540,14 @@ let data = {
     settings: {
       mainMonthlyGrant: 0,
       subMonthlyGrant: 0,
-      startMonth: new Date().toISOString().slice(0,7)
+      startMonth: new Date().toISOString().slice(0,7),
+      categories: ['식비', '카페']
     },
     transactions: []
   }
 };
 
-let currentTab = 'progress'; // 'progress' | 'ready' | 'planted' | 'absent' | 'all'
+let currentTab = 'progress'; // 'progress' | 'warn' | 'ready' | 'planted' | 'absent' | 'all'
 let currentFinanceTab = 'all';
 let currentMonth = new Date().toISOString().slice(0,7);
 
@@ -543,7 +591,8 @@ function initEmptyData(){
       settings: {
         mainMonthlyGrant: 100000,
         subMonthlyGrant: 0,
-        startMonth: new Date().toISOString().slice(0,7)
+        startMonth: new Date().toISOString().slice(0,7),
+        categories: ['식비', '카페']
       },
       transactions: []
     }
@@ -574,15 +623,37 @@ function migrateData(){
       settings: {
         mainMonthlyGrant: 0,
         subMonthlyGrant: 0,
-        startMonth: new Date().toISOString().slice(0,7)
+        startMonth: new Date().toISOString().slice(0,7),
+        categories: ['식비', '카페']
       },
       transactions: []
     };
   }
   if(!data.finance.settings) {
-    data.finance.settings = { mainMonthlyGrant: 0, subMonthlyGrant: 0, startMonth: new Date().toISOString().slice(0,7) };
+    data.finance.settings = { mainMonthlyGrant: 0, subMonthlyGrant: 0, startMonth: new Date().toISOString().slice(0,7), categories: ['식비', '카페'] };
+  }
+  if(!Array.isArray(data.finance.settings.categories) || data.finance.settings.categories.length === 0){
+    data.finance.settings.categories = ['식비', '카페'];
   }
   if(!Array.isArray(data.finance.transactions)) data.finance.transactions = [];
+}
+
+/* ================== 8 Weeks Absent Calculation ================== */
+function getAbsentDays(p){
+  // 최근 출석 날짜 기준, 출석 기록이 없다면 첫 방문일 기준
+  let lastDateStr = p.firstVisitDate || todayStr();
+  if(p.attendance && p.attendance.length > 0){
+    lastDateStr = p.attendance[p.attendance.length - 1].date;
+  }
+  const lastTime = new Date(lastDateStr).getTime();
+  const nowTime = new Date(todayStr()).getTime();
+  const diffDays = Math.floor((nowTime - lastTime) / (1000 * 60 * 60 * 24));
+  return Math.max(0, diffDays);
+}
+
+function is8WeeksAbsent(p){
+  // 진행중 상태인 대상자 중 8주(56일) 이상 미출석 시 경고
+  return p.status === 'progress' && getAbsentDays(p) >= 56;
 }
 
 /* ================== Accounting Calculation Core ================== */
@@ -648,20 +719,27 @@ function personCard(p){
   const checkedPeerToday = todayEntry && todayEntry.type==='peer';
   const fullyReady = isFullyReady(p);
   const peerReady = peerCount >= 1;
+  const isWarn = is8WeeksAbsent(p);
+  const absentDays = getAbsentDays(p);
 
   let leaves = '';
   const sortedTypes = p.attendance.map(a=>a.type);
   for(let i=0;i<target;i++){ leaves += leafSvg(i < count, sortedTypes[i]); }
 
-  let badge = '';
+  let badgesHtml = '';
   if(p.status === 'planted'){
-    badge = `<span class="badge planted">🌱 ${p.soonName || '등순완료'}</span>`;
+    badgesHtml += `<span class="badge planted">🌱 ${p.soonName || '등순완료'}</span>`;
   } else if(p.status === 'absent'){
-    badge = `<span class="badge absent">장기결석</span>`;
-  } else if(fullyReady){
-    badge = `<span class="badge ready">등순 준비완료</span>`;
+    badgesHtml += `<span class="badge absent">장기결석</span>`;
   } else {
-    badge = `<span class="badge progress">진행중</span>`;
+    if(isWarn){
+      badgesHtml += `<span class="badge absent-warning">⚠️ 8주+ 결석 (${absentDays}일)</span>`;
+    }
+    if(fullyReady){
+      badgesHtml += `<span class="badge ready">등순 준비완료</span>`;
+    } else {
+      badgesHtml += `<span class="badge progress">진행중</span>`;
+    }
   }
 
   const peerStatusLine = (p.status === 'progress' || p.status === 'absent') ? `
@@ -677,13 +755,13 @@ function personCard(p){
   ).join('') || '<span>출석 기록 없음</span>';
 
   return `
-  <div class="card" data-id="${p.id}">
+  <div class="card ${isWarn ? 'warn-border' : ''}" data-id="${p.id}">
     <div class="card-top">
       <div>
         <p class="card-name">${escapeHtml(p.name)}</p>
         <div class="card-meta">첫 방문 ${p.firstVisitDate || '미기록'}${p.phone ? ' · ' + escapeHtml(p.phone) : ''}</div>
       </div>
-      ${badge}
+      <div class="badge-group">${badgesHtml}</div>
     </div>
     <div class="leaves">${leaves}<span class="leaf-count">${count}/${target}</span></div>
     ${peerStatusLine}
@@ -709,6 +787,7 @@ function personCard(p){
     <div class="card-extra ${isOpen?'open':''}">
       ${p.note ? `<div class="row"><span>메모</span><span>${escapeHtml(p.note)}</span></div>` : ''}
       ${p.status==='planted' ? `<div class="row"><span>등순일</span><span>${p.plantedDate||'-'}</span></div>` : ''}
+      <div class="row"><span>마지막 출석 이후</span><span>${absentDays}일 경과</span></div>
       <div class="dates">${dateChips}</div>
       <div class="hint">주황색 칩은 동기모임입니다. 날짜 칩을 누르면 해당 출석이 삭제됩니다.</div>
       <div class="link-row">
@@ -729,7 +808,11 @@ function financeCard(t){
     <div class="card-top">
       <div>
         <p class="card-name" style="font-size:16px;">${escapeHtml(t.desc)}</p>
-        <div class="card-meta">${t.date} · <span class="badge ${isMain ? 'main-acc':'sub-acc'}">${isMain ? '메인':'서브'}</span> ${t.memo ? ' · ' + escapeHtml(t.memo) : ''}</div>
+        <div class="card-meta">
+          ${t.date} · <span class="badge ${isMain ? 'main-acc':'sub-acc'}">${isMain ? '메인':'서브'}</span>
+          ${t.category ? `<span class="badge cat">${escapeHtml(t.category)}</span>` : ''}
+          ${t.memo ? ' · ' + escapeHtml(t.memo) : ''}
+        </div>
       </div>
       <div style="text-align:right;">
         <span class="${isIncome ? 'amount-income' : 'amount-expense'}" style="font-size:16px;">
@@ -753,6 +836,7 @@ function renderAttendance(){
   let people = [...(data.people || [])];
 
   if(currentTab === 'progress') people = people.filter(p=>p.status==='progress');
+  if(currentTab === 'warn') people = people.filter(p=>is8WeeksAbsent(p));
   if(currentTab === 'ready') people = people.filter(p=>isFullyReady(p));
   if(currentTab === 'planted') people = people.filter(p=>p.status==='planted');
   if(currentTab === 'absent') people = people.filter(p=>p.status==='absent');
@@ -768,6 +852,7 @@ function renderAttendance(){
   }
 
   $('statProgress').textContent = data.people.filter(p=>p.status==='progress').length;
+  $('statWarn').textContent = data.people.filter(p=>is8WeeksAbsent(p)).length;
   $('statReady').textContent = data.people.filter(p=>isFullyReady(p)).length;
   $('statPlanted').textContent = data.people.filter(p=>p.status==='planted').length;
   $('statAbsent').textContent = data.people.filter(p=>p.status==='absent').length;
@@ -829,6 +914,7 @@ function render(){
     $('attendanceStats').style.display = 'flex';
     $('financeStats').style.display = 'none';
     $('budgetSettingBtn').style.display = 'none';
+    $('categorySettingBtn').style.display = 'none';
     $('headerSub').textContent = '새로 오신 분이 모임을 거쳐 순으로 등순하기까지의 여정을 기록해요.';
     renderAttendance();
   } else {
@@ -837,6 +923,7 @@ function render(){
     $('attendanceStats').style.display = 'none';
     $('financeStats').style.display = 'flex';
     $('budgetSettingBtn').style.display = 'inline-block';
+    $('categorySettingBtn').style.display = 'inline-block';
     $('headerSub').textContent = '지원금 배정 및 메인/서브 계좌의 지출과 자동 이월금을 관리해요.';
     renderFinance();
   }
@@ -1016,6 +1103,12 @@ $('savePlant').addEventListener('click', ()=>{
 });
 
 /* ================== Finance Logic & Events ================== */
+function populateCategorySelect(selectedVal){
+  const cats = data.finance.settings.categories || ['식비', '카페'];
+  const select = $('finCategory');
+  select.innerHTML = '<option value="">(선택 안함)</option>' + cats.map(c => `<option value="${escapeHtml(c)}" ${c===selectedVal?'selected':''}>${escapeHtml(c)}</option>`).join('');
+}
+
 $('financeMonthSelect').addEventListener('change', (e)=>{
   if(e.target.value){
     currentMonth = e.target.value;
@@ -1039,6 +1132,7 @@ function openFinanceForm(t){
   $('finDate').value = t ? t.date : todayStr();
   $('finType').value = t ? t.type : 'expense';
   $('finAccount').value = t ? t.account : 'main';
+  populateCategorySelect(t ? t.category : '식비');
   $('finDesc').value = t ? t.desc : '';
   $('finAmount').value = t ? t.amount : '';
   $('finMemo').value = t ? t.memo : '';
@@ -1054,6 +1148,7 @@ $('saveFinance').addEventListener('click', ()=>{
   const amount = Number($('finAmount').value);
   const type = $('finType').value;
   const account = $('finAccount').value;
+  const category = $('finCategory').value;
   const memo = $('finMemo').value.trim();
 
   if(!date || !desc || isNaN(amount) || amount <= 0){
@@ -1069,12 +1164,13 @@ $('saveFinance').addEventListener('click', ()=>{
       t.amount = amount;
       t.type = type;
       t.account = account;
+      t.category = category;
       t.memo = memo;
     }
   } else {
     data.finance.transactions.push({
       id: 'fin_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-      date, type, account, desc, amount, memo
+      date, type, account, category, desc, amount, memo
     });
   }
 
@@ -1125,6 +1221,50 @@ $('saveBudget').addEventListener('click', ()=>{
   showToast('예산 설정이 저장되었습니다.');
 });
 
+/* Category Settings Modal Logic */
+function renderCategoryChips(){
+  const cats = data.finance.settings.categories || ['식비', '카페'];
+  $('catChipsContainer').innerHTML = cats.map((c, idx) => `
+    <div class="cat-chip">
+      <span>${escapeHtml(c)}</span>
+      <span class="del" data-del-idx="${idx}" title="삭제">✕</span>
+    </div>
+  `).join('') || '<span style="font-size:12px;color:var(--ink-soft);">등록된 카테고리가 없습니다.</span>';
+}
+
+$('categorySettingBtn').addEventListener('click', ()=>{
+  renderCategoryChips();
+  $('newCatInput').value = '';
+  $('overlayCategory').classList.add('open');
+});
+
+$('closeCategory').addEventListener('click', ()=> $('overlayCategory').classList.remove('open'));
+$('overlayCategory').addEventListener('click', (e)=>{ if(e.target.id==='overlayCategory') $('overlayCategory').classList.remove('open'); });
+
+$('btnAddCat').addEventListener('click', ()=>{
+  const val = $('newCatInput').value.trim();
+  if(!val){ showToast('카테고리 이름을 입력하세요.'); return; }
+  if(!data.finance.settings.categories) data.finance.settings.categories = [];
+  if(data.finance.settings.categories.includes(val)){
+    showToast('이미 등록된 카테고리입니다.'); return;
+  }
+  data.finance.settings.categories.push(val);
+  saveData();
+  renderCategoryChips();
+  $('newCatInput').value = '';
+  showToast(`'${val}' 카테고리를 추가했습니다.`);
+});
+
+$('catChipsContainer').addEventListener('click', (e)=>{
+  if(e.target.classList.contains('del')){
+    const idx = parseInt(e.target.dataset.delIdx);
+    const removed = data.finance.settings.categories.splice(idx, 1);
+    saveData();
+    renderCategoryChips();
+    showToast(`'${removed}' 카테고리를 삭제했습니다.`);
+  }
+});
+
 /* ================== Backup & Export ================== */
 function downloadFile(blob, filename){
   const url = URL.createObjectURL(blob);
@@ -1172,7 +1312,7 @@ $('importJsonInput').addEventListener('change', (e)=>{
 });
 
 $('btnExportCsv').addEventListener('click', ()=>{
-  const headers = ['이름', '상태', '배속순', '첫방문일', '등순일', '연락처', '총출석횟수', '동기모임횟수', '출석날짜목록', '메모'];
+  const headers = ['이름', '상태', '배속순', '첫방문일', '등순일', '연락처', '총출석횟수', '동기모임횟수', '8주이상결석여부', '출석날짜목록', '메모'];
   const rows = data.people.map(p => {
     let statusText = '진행중';
     if(p.status === 'planted') statusText = '등순완료';
@@ -1181,7 +1321,8 @@ $('btnExportCsv').addEventListener('click', ()=>{
 
     const peerCount = p.attendance.filter(a=>a.type==='peer').length;
     const datesStr = p.attendance.map(a => `${a.date}(${a.type==='peer'?'동기':'일반'})`).join('; ');
-    
+    const isWarnText = is8WeeksAbsent(p) ? '경고(8주+)' : '정상';
+
     return [
       `"${(p.name||'').replace(/"/g, '""')}"`,
       `"${statusText}"`,
@@ -1191,6 +1332,7 @@ $('btnExportCsv').addEventListener('click', ()=>{
       `"${(p.phone||'').replace(/"/g, '""')}"`,
       p.attendance.length,
       peerCount,
+      `"${isWarnText}"`,
       `"${datesStr.replace(/"/g, '""')}"`,
       `"${(p.note||'').replace(/"/g, '""')}"`
     ].join(',');
@@ -1203,11 +1345,12 @@ $('btnExportCsv').addEventListener('click', ()=>{
 });
 
 $('btnExportFinanceCsv').addEventListener('click', ()=>{
-  const headers = ['날짜', '계좌', '구분', '내역', '금액', '비고'];
+  const headers = ['날짜', '계좌', '구분', '카테고리', '내역', '금액', '비고'];
   const rows = data.finance.transactions.map(t => [
     `"${t.date}"`,
     `"${t.account === 'main' ? '메인계좌' : '서브계좌'}"`,
     `"${t.type === 'income' ? '수입' : '지출'}"`,
+    `"${(t.category||'').replace(/"/g, '""')}"`,
     `"${(t.desc||'').replace(/"/g, '""')}"`,
     t.amount,
     `"${(t.memo||'').replace(/"/g, '""')}"`
