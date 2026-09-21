@@ -141,12 +141,6 @@
   .leaves{display:flex; gap:4px; margin:12px 0 6px; align-items:center; flex-wrap:wrap;}
   .leaf-count{font-size:12px; color:var(--ink-soft); margin-left:4px; font-weight:600;}
 
-  .peer-status{display:flex; align-items:center; gap:6px; font-size:11.5px; margin-bottom:10px; font-weight:600;}
-  .peer-status.ok{color:var(--peer);}
-  .peer-status.warn{color:var(--warn);}
-  .peer-status .pill{background:var(--peer-bg); color:var(--peer); padding:2px 8px; border-radius:20px; font-size:11px;}
-  .peer-status.warn .pill{background:#F5E1DD; color:var(--warn);}
-
   .card-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
   .card-actions button{
     flex:1; min-width:75px; padding:9px 8px; border-radius:10px; border:1px solid var(--line);
@@ -349,7 +343,7 @@
     </div>
     <div class="field">
       <label>목표 모임 횟수 (등순 기준)</label>
-      <input type="number" id="fTarget" min="1" max="20" value="6">
+      <input type="number" id="fTarget" min="1" max="20" value="5">
     </div>
     <div class="field">
       <label>메모</label>
@@ -372,7 +366,7 @@
     <div class="field">
       <label>모임 종류</label>
       <select id="customAttType">
-        <option value="regular">일반 모임</option>
+        <option value="regular">새친구 모임</option>
         <option value="peer">동기 모임</option>
       </select>
     </div>
@@ -387,7 +381,6 @@
   <div class="sheet">
     <h2>등순 처리</h2>
     <p style="font-size:13px;color:var(--ink-soft);margin-top:-8px;">어느 순으로 올려보낼까요?</p>
-    <p id="plantWarn" style="font-size:12.5px;color:var(--warn);font-weight:600;display:none;margin:-6px 0 4px;">⚠ 아직 동기모임에 한 번도 참석하지 않았어요. 그래도 등순 처리할까요?</p>
     <div class="field">
       <label>순 이름 *</label>
       <input type="text" id="pSoon" placeholder="예: 은혜3순">
@@ -618,6 +611,7 @@ function migrateData(){
     p.attendance = p.attendance.map(a => typeof a === 'string' ? {date:a, type:'regular'} : a);
     p.attendance.sort((a,b)=>a.date.localeCompare(b.date));
     if(!p.status) p.status = 'progress';
+    if(!p.target) p.target = 5;
   });
 
   if(!data.finance){
@@ -654,6 +648,13 @@ function getAbsentDays(p){
 
 function is8WeeksAbsent(p){
   return p.status === 'progress' && getAbsentDays(p) >= 56;
+}
+
+/* ================== Ready Condition (총 5회 달성 기준) ================== */
+function isFullyReady(p){
+  const count = p.attendance.length;
+  const target = p.target || 5;
+  return p.status === 'progress' && count >= target;
 }
 
 /* ================== Accounting Calculation Core ================== */
@@ -703,22 +704,13 @@ function leafSvg(filled, type){
   return `<svg width="15" height="15" viewBox="0 0 24 24" fill="${color}"><path d="M12 2C7 2 2 7 2 13c0 5 4 9 9 9 1-6 2-11 9-15C16 3 14 2 12 2z"/></svg>`;
 }
 
-function isFullyReady(p){
-  const count = p.attendance.length;
-  const target = p.target || 6;
-  const peerCount = p.attendance.filter(a=>a.type==='peer').length;
-  return p.status === 'progress' && count >= target && peerCount >= 1;
-}
-
 function personCard(p){
   const count = p.attendance.length;
-  const target = p.target || 6;
-  const peerCount = p.attendance.filter(a=>a.type==='peer').length;
+  const target = p.target || 5;
   const todayEntry = p.attendance.find(a=>a.date===todayStr());
   const checkedRegularToday = todayEntry && todayEntry.type==='regular';
   const checkedPeerToday = todayEntry && todayEntry.type==='peer';
   const fullyReady = isFullyReady(p);
-  const peerReady = peerCount >= 1;
   const isWarn = is8WeeksAbsent(p);
   const absentDays = getAbsentDays(p);
 
@@ -742,16 +734,10 @@ function personCard(p){
     }
   }
 
-  const peerStatusLine = (p.status === 'progress' || p.status === 'absent') ? `
-    <div class="peer-status ${peerReady ? 'ok' : 'warn'}">
-      <span class="pill">동기모임 ${peerCount}/1</span>
-      ${peerReady ? '동기모임 참석 완료' : '동기모임 최소 1회 필요'}
-    </div>` : '';
-
   const isOpen = expandedId === p.id;
 
   const dateChips = p.attendance.map(a =>
-    `<span class="${a.type==='peer'?'peer':''}" data-action="removeDate" data-id="${p.id}" data-date="${a.date}" title="탭하면 삭제">${a.date}${a.type==='peer' ? ' · 동기' : ' · 일반'} ✕</span>`
+    `<span class="${a.type==='peer'?'peer':''}" data-action="removeDate" data-id="${p.id}" data-date="${a.date}" title="탭하면 삭제">${a.date}${a.type==='peer' ? ' · 동기' : ' · 새친구'} ✕</span>`
   ).join('') || '<span>출석 기록 없음</span>';
 
   return `
@@ -764,10 +750,9 @@ function personCard(p){
       <div class="badge-group">${badgesHtml}</div>
     </div>
     <div class="leaves">${leaves}<span class="leaf-count">${count}/${target}</span></div>
-    ${peerStatusLine}
     <div class="card-actions">
       ${p.status === 'progress' ? `
-        <button class="${checkedRegularToday ? 'checked' : 'primary'}" data-action="checkRegular" data-id="${p.id}">${checkedRegularToday ? '오늘 일반 ✓' : '오늘 일반'}</button>
+        <button class="${checkedRegularToday ? 'checked' : 'primary'}" data-action="checkRegular" data-id="${p.id}">${checkedRegularToday ? '오늘 새친구 ✓' : '오늘 새친구'}</button>
         <button class="${checkedPeerToday ? 'checked' : 'peer-btn'}" data-action="checkPeer" data-id="${p.id}">${checkedPeerToday ? '오늘 동기 ✓' : '오늘 동기'}</button>
         <button class="custom-date" data-action="openCustomAtt" data-id="${p.id}">＋ 날짜 직접 추가</button>
         <button data-action="edit" data-id="${p.id}">편집</button>
@@ -865,8 +850,7 @@ function renderFinance(){
   const mainCalc = calculateAccountMonthly('main', selMonth);
   const subCalc = calculateAccountMonthly('sub', selMonth);
 
-  $('statMainTotal').textContent = formatMoney(mainCalc.finalBalance);
-  $('statSubTotal').textContent = formatMoney(subCalc.finalBalance);
+  $('statMainTotal').textContent = formatMoney(mainCalc.finalBalance);$('statSubTotal').textContent = formatMoney(subCalc.finalBalance);
 
   let summaryHtml = `<div style="font-weight:700;margin-bottom:8px;font-size:14px;color:var(--ink);">${selMonth} 예산 및 이월 정산</div>`;
   
@@ -910,21 +894,15 @@ function renderFinance(){
 function render(){
   if(currentView === 'attendance'){
     $('attendanceContainer').style.display = 'block';
-    $('financeContainer').style.display = 'none';
-    $('attendanceStats').style.display = 'flex';
-    $('financeStats').style.display = 'none';
-    $('budgetSettingBtn').style.display = 'none';
-    $('categorySettingBtn').style.display = 'none';
-    $('headerSub').textContent = '새로 오신 분이 모임을 거쳐 순으로 등순하기까지의 여정을 기록해요.';
+    $('financeContainer').style.display = 'none';$('attendanceStats').style.display = 'flex';
+    $('financeStats').style.display = 'none';$('budgetSettingBtn').style.display = 'none';
+    $('categorySettingBtn').style.display = 'none';$('headerSub').textContent = '새로 오신 분이 모임을 거쳐 순으로 등순하기까지의 여정을 기록해요.';
     renderAttendance();
   } else {
     $('attendanceContainer').style.display = 'none';
-    $('financeContainer').style.display = 'block';
-    $('attendanceStats').style.display = 'none';
-    $('financeStats').style.display = 'flex';
-    $('budgetSettingBtn').style.display = 'inline-block';
-    $('categorySettingBtn').style.display = 'inline-block';
-    $('headerSub').textContent = '지원금 배정 및 메인/서브 계좌의 지출과 자동 이월금을 관리해요.';
+    $('financeContainer').style.display = 'block';$('attendanceStats').style.display = 'none';
+    $('financeStats').style.display = 'flex';$('budgetSettingBtn').style.display = 'inline-block';
+    $('categorySettingBtn').style.display = 'inline-block';$('headerSub').textContent = '지원금 배정 및 메인/서브 계좌의 지출과 자동 이월금을 관리해요.';
     renderFinance();
   }
 }
@@ -932,15 +910,13 @@ function render(){
 /* ================== View Switcher ================== */
 $('viewBtnAttendance').addEventListener('click', ()=>{
   currentView = 'attendance';
-  $('viewBtnAttendance').classList.add('active');
-  $('viewBtnFinance').classList.remove('active');
+  $('viewBtnAttendance').classList.add('active');$('viewBtnFinance').classList.remove('active');
   render();
 });
 
 $('viewBtnFinance').addEventListener('click', ()=>{
   currentView = 'finance';
-  $('viewBtnFinance').classList.add('active');
-  $('viewBtnAttendance').classList.remove('active');
+  $('viewBtnFinance').classList.add('active');$('viewBtnAttendance').classList.remove('active');
   render();
 });
 
@@ -969,8 +945,7 @@ $('list').addEventListener('click', (e)=>{
     customAttId = id;
     $('customAttTitle').textContent = `${p.name} 출석 날짜 추가`;
     $('customAttDate').value = todayStr();
-    $('customAttType').value = 'regular';
-    $('overlayCustomAtt').classList.add('open');
+    $('customAttType').value = 'regular';$('overlayCustomAtt').classList.add('open');
   } else if(action === 'removeDate'){
     const date = btn.dataset.date;
     p.attendance = p.attendance.filter(a=>a.date!==date);
@@ -989,10 +964,7 @@ $('list').addEventListener('click', (e)=>{
   } else if(action === 'plant'){
     plantingId = id;
     $('pSoon').value = '';
-    $('pDate').value = todayStr();
-    const peerCount = p.attendance.filter(a=>a.type==='peer').length;
-    $('plantWarn').style.display = peerCount < 1 ? 'block' : 'none';
-    $('overlayPlant').classList.add('open');
+    $('pDate').value = todayStr();$('overlayPlant').classList.add('open');
   } else if(action === 'unplant'){
     p.status = 'progress';
     p.soonName = '';
@@ -1010,9 +982,7 @@ $('list').addEventListener('click', (e)=>{
   }
 });
 
-$('cancelCustomAtt').addEventListener('click', ()=> $('overlayCustomAtt').classList.remove('open'));
-$('overlayCustomAtt').addEventListener('click', (e)=>{ if(e.target.id==='overlayCustomAtt') $('overlayCustomAtt').classList.remove('open'); });
-$('saveCustomAtt').addEventListener('click', ()=>{
+$('cancelCustomAtt').addEventListener('click', ()=> $('overlayCustomAtt').classList.remove('open'));$('overlayCustomAtt').addEventListener('click', (e)=>{ if(e.target.id==='overlayCustomAtt') $('overlayCustomAtt').classList.remove('open'); });$('saveCustomAtt').addEventListener('click', ()=>{
   const selDate = $('customAttDate').value;
   const selType = $('customAttType').value;
   if(!selDate){ showToast('날짜를 선택해주세요.'); return; }
@@ -1051,13 +1021,13 @@ function openForm(p){
   $('fPhone').value = p ? p.phone : '';
   $('fDate').value = p ? p.firstVisitDate : todayStr();
   $('fStatus').value = p ? (p.status || 'progress') : 'progress';
-  $('fTarget').value = p ? (p.target||6) : 6;
+  $('fTarget').value = p ? (p.target||5) : 5;
   $('fNote').value = p ? p.note : '';
   $('overlayForm').classList.add('open');
 }
 $('openAdd').addEventListener('click', ()=>openForm(null));
 $('cancelForm').addEventListener('click', ()=>$('overlayForm').classList.remove('open'));
-$('overlayForm').addEventListener('click', (e)=>{ if(e.target.id==='overlayForm') $('overlayForm').classList.remove('open'); });
+$('overlayForm').addEventListener('click', (e)=>{ if(e.target.id==='overlayForm')$('overlayForm').classList.remove('open'); });
 
 $('saveForm').addEventListener('click', ()=>{
   const name = $('fName').value.trim();
@@ -1069,14 +1039,14 @@ $('saveForm').addEventListener('click', ()=>{
     p.name = name; p.phone = $('fPhone').value.trim();
     p.firstVisitDate = $('fDate').value; 
     p.status = status;
-    p.target = parseInt($('fTarget').value)||6;
+    p.target = parseInt($('fTarget').value)||5;
     p.note = $('fNote').value.trim();
   } else {
     data.people.push({
       id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
       name, phone: $('fPhone').value.trim(),
       firstVisitDate: $('fDate').value || todayStr(),
-      target: parseInt($('fTarget').value)||6,
+      target: parseInt($('fTarget').value)||5,
       note: $('fNote').value.trim(),
       attendance: [],
       status: status,
@@ -1088,9 +1058,7 @@ $('saveForm').addEventListener('click', ()=>{
   showToast('저장했어요.');
 });
 
-$('cancelPlant').addEventListener('click', ()=>$('overlayPlant').classList.remove('open'));
-$('overlayPlant').addEventListener('click', (e)=>{ if(e.target.id==='overlayPlant') $('overlayPlant').classList.remove('open'); });
-$('savePlant').addEventListener('click', ()=>{
+$('cancelPlant').addEventListener('click', ()=>$('overlayPlant').classList.remove('open'));$('overlayPlant').addEventListener('click', (e)=>{ if(e.target.id==='overlayPlant') $('overlayPlant').classList.remove('open'); });$('savePlant').addEventListener('click', ()=>{
   const soon = $('pSoon').value.trim();
   if(!soon){ showToast('순 이름을 입력해주세요.'); return; }
   const p = data.people.find(x=>x.id===plantingId);
@@ -1139,8 +1107,8 @@ function openFinanceForm(t){
   $('overlayFinance').classList.add('open');
 }
 
-$('cancelFinance').addEventListener('click', ()=> $('overlayFinance').classList.remove('open'));
-$('overlayFinance').addEventListener('click', (e)=>{ if(e.target.id==='overlayFinance') $('overlayFinance').classList.remove('open'); });
+$('cancelFinance').addEventListener('click', ()=>$('overlayFinance').classList.remove('open'));
+$('overlayFinance').addEventListener('click', (e)=>{ if(e.target.id==='overlayFinance')$('overlayFinance').classList.remove('open'); });
 
 $('saveFinance').addEventListener('click', ()=>{
   const date = $('finDate').value;
@@ -1201,15 +1169,14 @@ $('financeList').addEventListener('click', (e)=>{
 });
 
 /* Budget Settings Modal Logic */
-$('budgetSettingBtn').addEventListener('click', ()=>{
-  $('bMainGrant').value = data.finance.settings.mainMonthlyGrant || 0;
+$('budgetSettingBtn').addEventListener('click', ()=>{$('bMainGrant').value = data.finance.settings.mainMonthlyGrant || 0;
   $('bSubGrant').value = data.finance.settings.subMonthlyGrant || 0;
   $('bStartMonth').value = data.finance.settings.startMonth || currentMonth;
   $('overlayBudget').classList.add('open');
 });
 
-$('cancelBudget').addEventListener('click', ()=> $('overlayBudget').classList.remove('open'));
-$('overlayBudget').addEventListener('click', (e)=>{ if(e.target.id==='overlayBudget') $('overlayBudget').classList.remove('open'); });
+$('cancelBudget').addEventListener('click', ()=>$('overlayBudget').classList.remove('open'));
+$('overlayBudget').addEventListener('click', (e)=>{ if(e.target.id==='overlayBudget')$('overlayBudget').classList.remove('open'); });
 
 $('saveBudget').addEventListener('click', ()=>{
   data.finance.settings.mainMonthlyGrant = Number($('bMainGrant').value) || 0;
@@ -1234,12 +1201,11 @@ function renderCategoryChips(){
 
 $('categorySettingBtn').addEventListener('click', ()=>{
   renderCategoryChips();
-  $('newCatInput').value = '';
-  $('overlayCategory').classList.add('open');
+  $('newCatInput').value = '';$('overlayCategory').classList.add('open');
 });
 
-$('closeCategory').addEventListener('click', ()=> $('overlayCategory').classList.remove('open'));
-$('overlayCategory').addEventListener('click', (e)=>{ if(e.target.id==='overlayCategory') $('overlayCategory').classList.remove('open'); });
+$('closeCategory').addEventListener('click', ()=>$('overlayCategory').classList.remove('open'));
+$('overlayCategory').addEventListener('click', (e)=>{ if(e.target.id==='overlayCategory')$('overlayCategory').classList.remove('open'); });
 
 $('btnAddCat').addEventListener('click', ()=>{
   const val = $('newCatInput').value.trim();
@@ -1284,8 +1250,7 @@ $('btnExportJson').addEventListener('click', ()=>{
   showToast('JSON 백업 파일이 다운로드되었습니다.');
 });
 
-$('btnImportJson').addEventListener('click', ()=> $('importJsonInput').click());
-$('importJsonInput').addEventListener('change', (e)=>{
+$('btnImportJson').addEventListener('click', ()=> $('importJsonInput').click());$('importJsonInput').addEventListener('change', (e)=>{
   const file = e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
@@ -1320,7 +1285,7 @@ function generatePeopleCsv(peopleList){
     else if(isFullyReady(p)) statusText = '등순준비완료';
 
     const peerCount = p.attendance.filter(a=>a.type==='peer').length;
-    const datesStr = p.attendance.map(a => `${a.date}(${a.type==='peer'?'동기':'일반'})`).join('; ');
+    const datesStr = p.attendance.map(a => `${a.date}(${a.type==='peer'?'동기':'새친구'})`).join('; ');
     const isWarnText = is8WeeksAbsent(p) ? '경고(8주+)' : '정상';
 
     return [
@@ -1378,9 +1343,9 @@ $('btnExportFinanceCsv').addEventListener('click', ()=>{
   showToast('회계 장부 CSV 파일이 다운로드되었습니다.');
 });
 
-$('backupModalBtn').addEventListener('click', ()=> $('overlayBackup').classList.add('open'));
-$('closeBackup').addEventListener('click', ()=> $('overlayBackup').classList.remove('open'));
-$('overlayBackup').addEventListener('click', (e)=>{ if(e.target.id==='overlayBackup') $('overlayBackup').classList.remove('open'); });
+$('backupModalBtn').addEventListener('click', ()=>$('overlayBackup').classList.add('open'));
+$('closeBackup').addEventListener('click', ()=>$('overlayBackup').classList.remove('open'));
+$('overlayBackup').addEventListener('click', (e)=>{ if(e.target.id==='overlayBackup')$('overlayBackup').classList.remove('open'); });
 
 $('refreshBtn').addEventListener('click', loadData);
 
